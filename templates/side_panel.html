@@ -1,0 +1,17 @@
+<!-- ===================== SIDE PANEL ===================== -->
+<aside class="side-panel">
+    <h2><i class="fa-solid fa-upload"></i> Ingestion de documents</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" multiple accept=".pdf,.txt,.md,.csv">
+        <button type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Envoyer</button>
+        <span id="uploadStatus"></span>
+    </form>
+    <div class="info">
+        <b>Formats supportés :</b> txt, md, csv, pdf (texte brut)<br>
+        <b>Utilité :</b> Ajoutez vos cours, documents ou notes pour que l'IA puisse répondre de façon personnalisée à
+        vos questions.
+    </div>
+    <div class="pdf-list" id="pdfList">
+        <!-- Liste des PDF ingérés -->
+    </div>
+</aside>
