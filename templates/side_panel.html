@@ -1,17 +1,27 @@
 <!-- ===================== SIDE PANEL ===================== -->
-<aside class="side-panel">
-    <h2><i class="fa-solid fa-upload"></i> Ingestion de documents</h2>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" id="fileInput" name="file" multiple accept=".pdf,.txt,.md,.csv">
-        <button type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Envoyer</button>
-        <span id="uploadStatus"></span>
-    </form>
-    <div class="info">
-        <b>Formats supportés :</b> txt, md, csv, pdf (texte brut)<br>
-        <b>Utilité :</b> Ajoutez vos cours, documents ou notes pour que l'IA puisse répondre de façon personnalisée à
-        vos questions.
+<aside class="side-panel-area">
+    <div class="info-box">
+        <h2><span class="material-icons" style="vertical-align:middle; font-size:1.1em;">upload_file</span> Ingestion de documents</h2>
+        <form id="uploadForm" enctype="multipart/form-data" class="upload-form-group">
+            <!-- Modernized File Input -->
+            <label for="fileInput" class="file-input-label-md ripple-effect-container">
+                <span class="material-icons">attach_file</span>
+                <span id="fileNameDisplay">Sélectionner des fichiers</span> 
+            </label>
+            <input type="file" id="fileInput" name="file" multiple accept=".pdf,.txt,.md,.csv" class="file-input-hidden">
+            
+            <button type="submit" class="upload-btn-md ripple-effect-container">
+                <span class="material-icons">cloud_upload</span> Envoyer
+            </button>
+            <span id="uploadStatus" class="upload-status-text"></span>
+        </form>
+        <div class="info-text">
+            <b>Formats supportés :</b> txt, md, csv, pdf (texte brut)<br>
+            <b>Utilité :</b> Ajoutez vos cours, documents ou notes pour que l'IA puisse répondre de façon personnalisée à
+            vos questions.
+        </div>
     </div>
-    <div class="pdf-list" id="pdfList">
+    <div class="pdf-list-container" id="pdfList">
         <!-- Liste des PDF ingérés -->
     </div>
 </aside>

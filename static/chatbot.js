@@ -27,11 +27,11 @@ function displayMessage(message, className) {
   var messageDiv = document.createElement("div");
   messageDiv.classList.add("message", className);
   var icon = document.createElement("span");
-  icon.classList.add("icon");
+  icon.classList.add("material-icons"); // Changed from classList.add("icon") and innerHTML
   if (className === "user-message") {
-    icon.innerHTML = '<i class="fa-solid fa-user"></i>';
+    icon.textContent = "person"; // Material Icon name
   } else {
-    icon.innerHTML = '<i class="fa-solid fa-robot"></i>';
+    icon.textContent = "smart_toy"; // Material Icon name
   }
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
@@ -46,24 +46,38 @@ function displayBotMarkdown(markdownText) {
   var messageDiv = document.createElement("div");
   messageDiv.classList.add("message", "bot-message");
   var icon = document.createElement("span");
-  icon.classList.add("icon");
-  icon.innerHTML = '<i class="fa-solid fa-robot"></i>';
+  icon.classList.add("material-icons");
+  icon.textContent = 'smart_toy';
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
   textSpan.innerHTML = window.marked.parse(markdownText);
   messageDiv.appendChild(textSpan);
-  // Nouveau bouton TTS stylé
+
   var ttsBtn = document.createElement("button");
-  ttsBtn.className = "tts-btn";
-  ttsBtn.title = "Lire la réponse (voix GLaDOS)";
-  ttsBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-  ttsBtn.onclick = function () {
-    ttsBtn.classList.add("playing");
-    speakText(stripMarkdown(markdownText), function () {
+  ttsBtn.className = "tts-btn ripple-effect-container";
+  ttsBtn.title = "Lire la réponse";
+  
+  var ttsIcon = document.createElement("span");
+  ttsIcon.classList.add("material-icons");
+  ttsIcon.textContent = "volume_up"; // Default icon
+  ttsBtn.appendChild(ttsIcon);
+
+  ttsBtn.onclick = function (event) {
+    if (ttsBtn.classList.contains("playing")) {
+      window.speechSynthesis.cancel(); // Stop speaking
       ttsBtn.classList.remove("playing");
-    });
+      ttsIcon.textContent = "volume_up"; // Reset icon
+    } else {
+      ttsBtn.classList.add("playing");
+      ttsIcon.textContent = "stop"; // Modernized icon for stopping TTS
+      speakText(stripMarkdown(markdownText), function () {
+        ttsBtn.classList.remove("playing");
+        ttsIcon.textContent = "volume_up"; // Reset icon when finished
+      });
+    }
   };
   messageDiv.appendChild(ttsBtn);
+
   chatbox.appendChild(messageDiv);
   chatbox.scrollTop = chatbox.scrollHeight;
 }
@@ -116,33 +130,50 @@ function removeLoading() {
 }
 
 // ===================== PDF MANAGEMENT =====================
-function refreshPdfList() {
+function fetchPdfs() { // Renamed from refreshPdfList to better reflect it fetches and then refreshes
   fetch("/list_pdfs")
     .then((res) => res.json())
     .then((data) => {
       var pdfList = document.getElementById("pdfList");
-      pdfList.innerHTML = "";
+      pdfList.innerHTML = ""; // Clear existing list
       if (data.pdfs && data.pdfs.length > 0) {
         data.pdfs.forEach((pdf) => {
           var item = document.createElement("div");
           item.className = "pdf-item";
+          
           var name = document.createElement("span");
           name.className = "pdf-name";
-          name.innerHTML =
-            '<i class="fa-solid fa-file-pdf" style="color:#e53935"></i> ' + pdf;
-          var del = document.createElement("button");
-          del.className = "delete-btn";
-          del.innerHTML = '<i class="fa-solid fa-trash"></i>';
-          del.onclick = function () {
+          name.innerHTML = '<span class="material-icons">picture_as_pdf</span> ' + pdf; // Using Material Icon
+          
+          var delBtn = document.createElement("button");
+          delBtn.className = "delete-btn-md ripple-effect-container"; // Apply MD3 style and ripple
+          delBtn.title = "Supprimer le fichier";
+          
+          var delIcon = document.createElement("span");
+          delIcon.classList.add("material-icons");
+          delIcon.textContent = "delete"; // Material Icon for delete
+          delBtn.appendChild(delIcon);
+          
+          delBtn.onclick = function () {
             deletePdf(pdf);
           };
+          
           item.appendChild(name);
-          item.appendChild(del);
+          item.appendChild(delBtn);
           pdfList.appendChild(item);
         });
       } else {
-        pdfList.innerHTML = '<span style="color:#888">Aucun PDF ingéré.</span>';
+        pdfList.innerHTML = '<div class="pdf-item-empty"><span class="material-icons">info</span> Aucun PDF ingéré.</div>';
       }
+      // Re-apply ripple effect to newly added buttons if not using event delegation
+      if (typeof applyRippleEffect === 'function') {
+        applyRippleEffect(); 
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching PDF list:", error);
+      var pdfList = document.getElementById("pdfList");
+      pdfList.innerHTML = '<div class="pdf-item-empty"><span class="material-icons">error</span> Erreur au chargement des PDFs.</div>';
     });
 }
 
@@ -151,7 +182,20 @@ function deletePdf(pdf) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filename: pdf }),
-  }).then(() => refreshPdfList());
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json(); 
+  })
+  .then(() => {
+    fetchPdfs(); // Refresh the list after deletion
+  })
+  .catch(error => {
+    console.error("Error deleting PDF:", error);
+    // Optionally, display an error message to the user here
+  });
 }
 
 document
@@ -163,43 +207,221 @@ document
     }
   });
 
-document.getElementById("uploadForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-  var formData = new FormData();
-  var files = document.getElementById("fileInput").files;
-  if (files.length === 0) {
-    document.getElementById("uploadStatus").textContent =
-      "Veuillez sélectionner un ou plusieurs fichiers.";
-    document.getElementById("uploadStatus").style.color = "#e53935";
-    return;
-  }
-  for (var i = 0; i < files.length; i++) {
-    formData.append("file", files[i]);
-  }
-  document.getElementById("uploadStatus").textContent = "Envoi en cours...";
-  document.getElementById("uploadStatus").style.color = "#2193b0";
-  fetch("/upload", {
-    method: "POST",
-    body: formData,
-  })
+// ===================== RIPPLE EFFECT =====================
+function applyRippleEffect() {
+  const rippleContainers = document.querySelectorAll(".ripple-effect-container");
+
+  rippleContainers.forEach((container) => {
+    container.addEventListener("click", function (e) {
+      const ripple = document.createElement("span");
+      ripple.classList.add("ripple");
+
+      // Remove any existing ripples
+      const existingRipple = container.querySelector(".ripple");
+      if (existingRipple) {
+        existingRipple.remove();
+      }
+
+      container.appendChild(ripple);
+
+      const rect = container.getBoundingClientRect();
+      // Calculate click position relative to the button
+      // Account for page scroll
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Set ripple position and size
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + "px";
+      ripple.style.left = clickX - size / 2 + "px";
+      ripple.style.top = clickY - size / 2 + "px";
+
+      // Start the animation
+      ripple.classList.add("active");
+
+      // Remove ripple after animation (adjust timing to match CSS animation)
+      setTimeout(() => {
+        ripple.remove();
+      }, 600); // Corresponds to the animation duration in style.css
+    });
+  });
+}
+
+// Apply ripple effect once the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const userInputField = document.getElementById('userInput');
+    if (userInputField) {
+        userInputField.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default Enter behavior
+                sendMessage(); 
+            }
+        });
+    }
+    
+    applyRippleEffect(); // Initial application for static elements
+    
+    if (typeof fetchPdfs === 'function') {
+        fetchPdfs(); // Initial fetch of PDFs
+    }
+
+    // Initialize Drag and Drop
+    initializeDragAndDrop();
+
+    // Any other initializations
+});
+
+// ===================== DRAG AND DROP FUNCTIONALITY =====================
+function initializeDragAndDrop() {
+    const body = document.body;
+    let dragDropOverlay = document.getElementById('dragDropOverlay');
+
+    // Create overlay if it doesn't exist
+    if (!dragDropOverlay) {
+        dragDropOverlay = document.createElement('div');
+        dragDropOverlay.id = 'dragDropOverlay';
+        dragDropOverlay.className = 'drag-drop-overlay';
+        
+        const overlayContent = document.createElement('div');
+        overlayContent.className = 'drag-drop-overlay-content';
+        
+        const icon = document.createElement('span');
+        icon.className = 'material-icons';
+        icon.textContent = 'upload_file';
+        
+        const text = document.createElement('p');
+        text.textContent = 'Déposez les fichiers ici';
+        
+        overlayContent.appendChild(icon);
+        overlayContent.appendChild(text);
+        dragDropOverlay.appendChild(overlayContent);
+        body.appendChild(dragDropOverlay);
+    }
+
+    let dragCounter = 0; // To handle nested dragenter/dragleave events
+
+    body.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter++;
+        // Only show overlay if dataTransfer contains files
+        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+            dragDropOverlay.classList.add('active');
+        }
+    });
+
+    body.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter--;
+        if (dragCounter === 0) {
+            dragDropOverlay.classList.remove('active');
+        }
+    });
+
+    body.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Necessary to allow drop
+        e.stopPropagation();
+        // Can add visual cues here if needed, but overlay handles most of it
+        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+             e.dataTransfer.dropEffect = 'copy'; // Show a copy icon
+        }
+    });
+
+    body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragDropOverlay.classList.remove('active');
+        dragCounter = 0;
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // Pass files to the existing upload mechanism
+            handleFileUpload(files);
+        }
+    });
+}
+
+function handleFileUpload(files) {
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    // Create a new FormData object and append files
+    var formData = new FormData();
+    if (files.length === 0) {
+        uploadStatus.textContent = "Aucun fichier sélectionné.";
+        uploadStatus.style.color = "var(--current-error)";
+        return;
+    }
+    for (var i = 0; i < files.length; i++) {
+        // Basic file type check (can be expanded)
+        if (!['.pdf', '.txt', '.md', '.csv'].some(ext => files[i].name.toLowerCase().endsWith(ext))) {
+            uploadStatus.textContent = `Format non supporté pour ${files[i].name}.`;
+            uploadStatus.style.color = "var(--current-error)";
+            // Potentially skip this file or stop the whole upload
+            // For now, we'll just show a message and continue with other valid files if any
+            // Or, to be stricter, you could return here.
+            // return;
+            continue; // Skip this file
+        }
+        formData.append("file", files[i]);
+    }
+
+    // If after filtering, no valid files are left
+    if (!formData.has("file")) {
+        uploadStatus.textContent = "Aucun fichier valide sélectionné.";
+        uploadStatus.style.color = "var(--current-error)";
+        return;
+    }
+
+    uploadStatus.textContent = "Envoi en cours...";
+    uploadStatus.style.color = "var(--current-secondary)"; // Use theme color
+
+    fetch("/upload", {
+        method: "POST",
+        body: formData,
+    })
     .then((response) => response.json())
     .then((data) => {
-      if (data.success) {
-        document.getElementById("uploadStatus").textContent =
-          "Fichier(s) ingéré(s) avec succès !";
-        document.getElementById("uploadStatus").style.color = "#388e3c";
-        refreshPdfList();
-      } else {
-        document.getElementById("uploadStatus").textContent =
-          "Erreur lors de l'ingestion.";
-        document.getElementById("uploadStatus").style.color = "#e53935";
-      }
+        if (data.success) {
+            uploadStatus.textContent = "Fichier(s) ingéré(s) avec succès !";
+            uploadStatus.style.color = "var(--current-primary)"; // Use theme color
+            fetchPdfs(); // Refresh PDF list
+        } else {
+            uploadStatus.textContent = data.message || "Erreur lors de l'ingestion.";
+            uploadStatus.style.color = "var(--current-error)";
+        }
     })
-    .catch(() => {
-      document.getElementById("uploadStatus").textContent =
-        "Erreur lors de l'envoi.";
-      document.getElementById("uploadStatus").style.color = "#e53935";
+    .catch((error) => {
+        console.error('Error during upload:', error);
+        uploadStatus.textContent = "Erreur lors de l'envoi.";
+        uploadStatus.style.color = "var(--current-error)";
     });
+
+    // Clear the file input visually if needed, though drag/drop doesn't use it directly
+    if (fileInput) {
+        fileInput.value = ''; 
+    }
+}
+
+// Modify the existing uploadForm event listener to use handleFileUpload
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (other DOMContentLoaded code like userInput keypress, applyRippleEffect, fetchPdfs)
+
+    const uploadForm = document.getElementById('uploadForm');
+    if (uploadForm) {
+        uploadForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const files = document.getElementById("fileInput").files;
+            handleFileUpload(files);
+        });
+    }
+    
+    initializeDragAndDrop();
 });
-// ===================== INIT =====================
-refreshPdfList();
+
+// Remove or comment out the old uploadForm event listener if it's separate
+// and not already part of the DOMContentLoaded adjustments above.
+// The goal is to have one way to handle file uploads, used by both
+// the traditional input and drag-and-drop.

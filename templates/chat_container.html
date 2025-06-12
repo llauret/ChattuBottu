@@ -1,16 +1,23 @@
 <!-- ===================== CHAT CONTAINER ===================== -->
-<div class="container">
-    <div class="header">
-        <h1><i class="fa-solid fa-graduation-cap"></i> Chatbot IA</h1>
+<div class="chat-area">
+    <header class="app-bar">
+        <button class="theme-toggle-btn ripple-effect-container" id="themeToggle" title="Changer de thème">
+            <span class="material-icons" id="themeIcon">dark_mode</span>
+        </button>
+        <h1><span class="material-icons" style="vertical-align:middle; font-size:1.2em;">school</span> vIAzzi</h1>
         <p>Posez vos questions sur vos cours ou ingérez des documents pour enrichir l'IA !</p>
-    </div>
-    <div id="chatbox">
-        <div class="message bot-message"><span class="icon"><i class="fa-solid fa-robot"></i></span>Bonjour ! Posez-moi
+    </header>
+    <div id="chatbox" class="chat-messages-container">
+        <div class="message bot-message"><span class="icon"><span class="material-icons">smart_toy</span></span>Bonjour ! Posez-moi
             vos questions sur vos cours.</div>
+        <!-- Messages will be added here by JavaScript -->
     </div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Posez votre question ici...">
-        <button class="send-btn" onclick="sendMessage()"><span>Envoyer</span> <i
-                class="fa-solid fa-paper-plane"></i></button>
+    <div class="input-area-container">
+        <div class="input-field-group">
+            <input type="text" id="userInput" placeholder="Posez votre question ici..." class="input-field">
+            <button class="send-btn-md ripple-effect-container" onclick="sendMessage()">
+                <span class="material-icons">send</span>
+            </button>
+        </div>
     </div>
 </div>

@@ -1,3 +1,31 @@
 <!-- ===================== SCRIPTS ===================== -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/static/chatbot.js"></script>
+<script>
+// ===================== THEME SWITCHER =====================
+(function() {
+  const root = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  function setTheme(theme) {
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      if (themeIcon) themeIcon.textContent = 'light_mode';
+    } else {
+      root.setAttribute('data-theme', 'light');
+      if (themeIcon) themeIcon.textContent = 'dark_mode';
+    }
+    localStorage.setItem('theme', theme);
+  }
+  function toggleTheme() {
+    const current = root.getAttribute('data-theme') || 'light';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+  if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+  // Init theme
+  const saved = localStorage.getItem('theme');
+  if (saved) setTheme(saved);
+  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+  else setTheme('light');
+})();
+</script>
