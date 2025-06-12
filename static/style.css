@@ -38,7 +38,7 @@
   --md-sys-color-background-light: #fefcff;
   --md-sys-color-on-background-light: #1a1c1e;
   --md-sys-color-surface-light: #fefcff; /* Main background for components */
-  --md-sys-color-on-surface-light: #1a1c1e; /* Text on surface */
+  --md-sys-color-on-surface-light: #1a1c1e; /* Text on surface
   --md-sys-color-surface-variant-light: #dfe3eb; /* Subtle backgrounds, outlines */
   --md-sys-color-on-surface-variant-light: #42474e; /* Text on surface-variant */
   --md-sys-color-outline-light: #73777f;
@@ -357,6 +357,104 @@ a:hover {
   padding: 2px 4px;
 }
 
+/* Enhanced Markdown Styling within .message */
+.message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+  font-weight: 600; /* Slightly bolder for emphasis in chat */
+  line-height: 1.3;
+}
+
+.message h1 {
+  font-size: 1.5em; /* Adjusted for message context */
+  color: var(--current-primary);
+}
+.message h2 {
+  font-size: 1.3em;
+  color: var(--current-secondary);
+}
+.message h3 {
+  font-size: 1.15em;
+}
+.message h4 {
+  font-size: 1em;
+  font-weight: 500;
+}
+
+.message p {
+  margin-top: 0;
+  margin-bottom: 0.75em;
+}
+.message p:last-child {
+  margin-bottom: 0;
+}
+
+.message ul, .message ol {
+  padding-left: 20px; /* Standard indentation */
+  margin-top: 0.5em;
+  margin-bottom: 0.75em;
+}
+.message ul li, .message ol li {
+  margin-bottom: 0.3em;
+}
+.message ul li::marker {
+  color: var(--current-primary); /* Themed bullet points */
+}
+
+.message blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid var(--current-primary);
+  background-color: var(--current-surface-container); /* Subtle background */
+  color: var(--current-on-surface-variant);
+  border-radius: var(--md-shape-corner-xs) var(--md-shape-corner-sm) var(--md-shape-corner-sm) var(--md-shape-corner-xs);
+}
+.message blockquote p {
+  margin-bottom: 0.5em;
+}
+
+.message hr {
+  border: none;
+  height: 1px;
+  background-color: var(--current-outline);
+  margin: 1em 0;
+}
+
+.message table {
+  width: auto; /* Let content define width, or 100% if preferred */
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+  box-shadow: 0 0 0 1px var(--current-outline); /* Thin border around table */
+  border-radius: var(--md-shape-corner-sm);
+  overflow: hidden; /* To respect border-radius on th/td */
+}
+.message th, .message td {
+  border: 1px solid var(--current-outline);
+  padding: 0.6em 0.8em;
+  text-align: left;
+}
+.message th {
+  background-color: var(--current-surface-container-high);
+  font-weight: 600;
+  color: var(--current-on-surface-variant);
+}
+.message tr:nth-child(even) {
+  background-color: var(--current-surface-container-low);
+}
+
+.message a {
+  color: var(--current-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--current-primary-container); /* Subtle underline */
+  font-weight: 500;
+}
+.message a:hover {
+  color: var(--current-primary-container);
+  text-decoration-color: var(--current-primary);
+}
+
 /* TTS Button inside messages */
 .message .tts-btn {
   display: inline-flex;
@@ -388,6 +486,36 @@ a:hover {
 }
 
 .message .tts-btn .material-icons {
+  font-size: 20px;
+}
+
+/* Reply Button inside messages */
+.message .reply-btn-md {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; 
+  height: 36px;
+  border-radius: var(--md-shape-corner-full);
+  background-color: transparent;
+  color: var(--current-on-secondary-container);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-left: var(--md-shape-corner-xs); /* Space from TTS button or text */
+  flex-shrink: 0; 
+}
+
+.bot-message .reply-btn-md {
+  color: var(--current-on-secondary-container);
+}
+
+.bot-message .reply-btn-md:hover {
+  background-color: var(--current-secondary); 
+  color: var(--current-on-secondary);
+}
+
+.message .reply-btn-md .material-icons {
   font-size: 20px;
 }
 
@@ -764,3 +892,144 @@ a:hover {
   font-weight: 500;
   color: #ffffff; /* Ensure text is white on the overlay */
 }
+
+/* Reply Interface Styles - Compact Version (Modern MD3 Look with specific corners/border) */
+.reply-context-area {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden; /* Important for border-radius and hiding content */
+    padding-left: 16px;
+    padding-right: 16px;
+    transition: max-height 0.25s ease-out, 
+                opacity 0.2s ease-out, 
+                padding-top 0.25s ease-out, 
+                padding-bottom 0.25s ease-out,
+                border-color 0.25s ease-out; /* For all border sides */
+    
+    /* Set up for full border transition */
+    border: 1px solid transparent;
+    
+    border-top-left-radius: var(--md-shape-corner-lg);
+    border-top-right-radius: var(--md-shape-corner-lg);
+    /* No border-bottom-left-radius or border-bottom-right-radius specified, so they remain 0 (square) */
+    
+    background-color: var(--current-surface-container);
+    margin-left: 0; /* Adjust if it was inheriting from .chat-area padding */
+    margin-right: 0; /* Adjust if it was inheriting from .chat-area padding */
+    /* Position it relative to chat-area if it's a direct child, or ensure full width if needed */
+}
+
+.reply-context-active {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    max-height: 150px; /* Adjust as needed */
+    opacity: 1;
+    border-color: var(--current-outline); /* Makes all borders visible */
+}
+
+.reply-compact-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--current-on-surface-variant);
+    opacity: 0; /* Content starts transparent */
+    transition: opacity 0.2s ease-in-out; /* Content fade transition */
+}
+
+.reply-context-active .reply-compact-container {
+    opacity: 1;
+    transition-delay: 0.05s; /* Content fades in slightly after container expands */
+}
+
+.reply-compact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+}
+
+.reply-compact-header .reply-to-label {
+    color: var(--current-on-surface-variant);
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.reply-compact-header .reply-to-label .material-icons {
+    font-size: 16px;
+    margin-right: 6px;
+    color: var(--current-secondary);
+}
+
+.reply-compact-header .reply-close-btn {
+    background: none;
+    border: none;
+    color: var(--current-on-surface-variant);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--md-shape-corner-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.reply-compact-header .reply-close-btn:hover {
+    background-color: var(--current-surface-container-high);
+    color: var(--current-on-surface);
+}
+
+.reply-compact-header .reply-close-btn .material-icons {
+    font-size: 20px;
+}
+
+.reply-compact-original-message {
+    background-color: var(--current-surface-container-low);
+    padding: 8px 12px;
+    border-radius: var(--md-shape-corner-md);
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    color: var(--current-on-surface-variant);
+    line-height: 1.4;
+    border-left: 3px solid var(--current-secondary-container);
+}
+
+/* Ensure input area container ALWAYS has its original styling */
+.input-area-container {
+    border-top: 1px solid var(--current-outline);
+    /* Default: input area has rounded top matching chat area if it's the first element */
+    /* Or, if it's always below chatbox, it might not need top radius */
+    /* For consistency, let's assume it has its own defined shape */
+    /* border-top-left-radius: var(--md-shape-corner-lg); */ /* Remove if not intended globally */
+    /* border-top-right-radius: var(--md-shape-corner-lg); */ /* Remove if not intended globally */
+    /* No transition needed here as it's static */
+}
+
+/* REMOVE rules that change .input-area-container based on reply context */
+/* For example, delete or comment out:
+.reply-context-active + .input-area-container {
+    border-top-color: transparent; 
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+*/
+
+/* Ensure input field group (the actual text bar) ALWAYS has its original pill shape */
+.input-field-group {
+    border-radius: var(--md-shape-corner-full);
+    /* No transition needed here as it's static */
+}
+
+/* REMOVE rules that change .input-field-group based on reply context */
+/* For example, delete or comment out:
+.reply-context-active + .input-area-container .input-field-group {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+*/
+
+/* ...rest of the styles... */

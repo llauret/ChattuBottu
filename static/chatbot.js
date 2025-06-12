@@ -2,13 +2,24 @@
 function sendMessage() {
   var userInput = document.getElementById("userInput");
   var message = userInput.value;
-  if (message.trim() === "") {
+  if (message.trim() === "" && !activeReplyContext) {
     return;
   }
-  displayMessage(message, "user-message");
+
+  let finalMessage = message;
+  if (activeReplyContext) {
+    const quotedOriginal = activeReplyContext
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
+    finalMessage = `${quotedOriginal}\n\n${message.trim()}`;
+  }
+
+  displayMessage(finalMessage, "user-message");
   userInput.value = "";
+  clearReplyContext();
   showLoading();
-  fetch(`/get?msg=${encodeURIComponent(message)}`)
+  fetch(`/get?msg=${encodeURIComponent(finalMessage)}`)
     .then((response) => response.text())
     .then((data) => {
       removeLoading();
@@ -47,7 +58,7 @@ function displayBotMarkdown(markdownText) {
   messageDiv.classList.add("message", "bot-message");
   var icon = document.createElement("span");
   icon.classList.add("material-icons");
-  icon.textContent = 'smart_toy';
+  icon.textContent = "smart_toy";
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
   textSpan.innerHTML = window.marked.parse(markdownText);
@@ -56,7 +67,7 @@ function displayBotMarkdown(markdownText) {
   var ttsBtn = document.createElement("button");
   ttsBtn.className = "tts-btn ripple-effect-container";
   ttsBtn.title = "Lire la réponse";
-  
+
   var ttsIcon = document.createElement("span");
   ttsIcon.classList.add("material-icons");
   ttsIcon.textContent = "volume_up"; // Default icon
@@ -77,6 +88,21 @@ function displayBotMarkdown(markdownText) {
     }
   };
   messageDiv.appendChild(ttsBtn);
+
+  // Add Reply Button
+  var replyBtn = document.createElement("button");
+  replyBtn.className = "reply-btn-md ripple-effect-container";
+  replyBtn.title = "Répondre à ce message";
+
+  var replyIcon = document.createElement("span");
+  replyIcon.classList.add("material-icons");
+  replyIcon.textContent = "reply";
+  replyBtn.appendChild(replyIcon);
+
+  replyBtn.onclick = function () {
+    showReplyUI(markdownText);
+  };
+  messageDiv.appendChild(replyBtn);
 
   chatbox.appendChild(messageDiv);
   chatbox.scrollTop = chatbox.scrollHeight;
@@ -421,7 +447,105 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeDragAndDrop();
 });
 
-// Remove or comment out the old uploadForm event listener if it's separate
-// and not already part of the DOMContentLoaded adjustments above.
-// The goal is to have one way to handle file uploads, used by both
-// the traditional input and drag-and-drop.
+let activeReplyContext = null; // To store the original message text for reply
+let currentReplyUI = null; // To store the DOM element of the current reply UI
+
+function showReplyUI(originalMarkdownText) {
+    if (currentReplyUI) {
+        if (activeReplyContext === originalMarkdownText) {
+            document.getElementById('userInput').focus();
+            return;
+        }
+        clearReplyContext(true); // Immediate clear for re-opening
+    }
+
+    activeReplyContext = originalMarkdownText;
+    const replyContextArea = document.getElementById('reply-context-area');
+    replyContextArea.innerHTML = ''; // Clear previous content immediately
+
+    const container = document.createElement('div');
+    container.className = 'reply-compact-container';
+
+    const header = document.createElement('div');
+    header.className = 'reply-compact-header';
+    const title = document.createElement('span');
+    title.className = 'reply-to-label';
+    const replyIcon = document.createElement('span');
+    replyIcon.className = 'material-icons';
+    replyIcon.textContent = 'reply';
+    title.appendChild(replyIcon);
+    title.appendChild(document.createTextNode('Répondre à :'));
+    header.appendChild(title);
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'reply-close-btn ripple-effect-container';
+    closeBtn.title = 'Annuler la réponse (Echap)';
+    const closeIcon = document.createElement('span');
+    closeIcon.className = 'material-icons';
+    closeIcon.textContent = 'close';
+    closeBtn.appendChild(closeIcon);
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        clearReplyContext();
+    };
+    header.appendChild(closeBtn);
+    container.appendChild(header);
+
+    const originalMsgDiv = document.createElement('div');
+    originalMsgDiv.className = 'reply-compact-original-message';
+    originalMsgDiv.textContent = stripMarkdown(originalMarkdownText).substring(0, 100) + (originalMarkdownText.length > 100 ? '...' : '');
+    container.appendChild(originalMsgDiv);
+
+    replyContextArea.appendChild(container);
+    currentReplyUI = container;
+
+    // Force reflow before adding class to ensure transition plays
+    void replyContextArea.offsetWidth;
+
+    requestAnimationFrame(() => {
+        replyContextArea.classList.add('reply-context-active');
+    });
+
+    document.getElementById('userInput').focus();
+    if (typeof applyRippleEffect === 'function') {
+        applyRippleEffect();
+    }
+    document.addEventListener('keydown', handleEscapeForReply);
+}
+
+function clearReplyContext(immediate = false) {
+    activeReplyContext = null;
+    const replyContextArea = document.getElementById('reply-context-area');
+
+    if (immediate) {
+        replyContextArea.classList.remove('reply-context-active');
+        replyContextArea.innerHTML = '';
+        currentReplyUI = null;
+    } else {
+        replyContextArea.classList.remove('reply-context-active');
+        // CSS handles content fade-out via .reply-compact-container opacity transition
+        // when .reply-context-active is removed from replyContextArea.
+        // setTimeout ensures innerHTML is cleared after the container's transition (max-height, padding etc.)
+        setTimeout(() => {
+            if (!replyContextArea.classList.contains('reply-context-active') && currentReplyUI) {
+                replyContextArea.innerHTML = '';
+                currentReplyUI = null;
+            }
+        }, 250); // Should match the longest transition duration on .reply-context-area (e.g., max-height)
+    }
+
+    document.removeEventListener('keydown', handleEscapeForReply);
+}
+
+function handleEscapeForReply(event) {
+    if (event.key === 'Escape') {
+        if (activeReplyContext) { // Check if reply UI is active
+            clearReplyContext();
+        }
+    }
+}
+
+/* ... sendMessage and other functions remain largely the same ... */
+/* Ensure the sendMessage function correctly uses activeReplyContext and calls clearReplyContext */
+
+// Example of where applyRippleEffect might be called if it's not global or on DOMContentLoaded
+// document.addEventListener('DOMContentLoaded', () => { applyRippleEffect(); });
