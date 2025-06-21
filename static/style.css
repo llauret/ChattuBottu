@@ -1657,17 +1657,7 @@ a:hover {
   backdrop-filter: blur(4px);
 }
 
-.qcm-results-content {
-  background: var(--current-surface);
-  border-radius: var(--md-shape-corner-lg);
-  padding: 24px;
-  max-width: 700px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: var(--current-elevation-3);
-  border: 1px solid var(--current-outline);
-}
+/* Styles pour le contenu des résultats QCM - pas de container supplémentaire */
 
 .qcm-results-header {
   text-align: center;
@@ -1818,11 +1808,7 @@ a:hover {
     padding: 16px;
     width: 95%;
   }
-  
-  .qcm-results-content {
-    padding: 16px;
-    width: 95%;
-  }
+    /* Contenu des résultats - pas de styles supplémentaires nécessaires */
   
   .qcm-score-circle {
     width: 100px;

@@ -1,0 +1,78 @@
+/* ===================== UTILITY CLASSES ===================== */
+
+/* Spacing utilities */
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+
+.p-1 { padding: 0.25rem; }
+.p-2 { padding: 0.5rem; }
+.p-3 { padding: 1rem; }
+.p-4 { padding: 1.5rem; }
+
+/* Text utilities */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.text-small { font-size: 0.875rem; }
+.text-large { font-size: 1.125rem; }
+
+.font-weight-bold { font-weight: 600; }
+.font-weight-normal { font-weight: 400; }
+
+/* Display utilities */
+.d-none { display: none; }
+.d-block { display: block; }
+.d-flex { display: flex; }
+.d-inline-flex { display: inline-flex; }
+
+/* Flex utilities */
+.flex-column { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.align-center { align-items: center; }
+
+/* Color utilities */
+.text-primary { color: var(--current-primary); }
+.text-secondary { color: var(--current-secondary); }
+.text-error { color: var(--current-error); }
+.text-on-surface { color: var(--current-on-surface); }
+.text-on-surface-variant { color: var(--current-on-surface-variant); }
+
+/* Background utilities */
+.bg-primary { background-color: var(--current-primary); }
+.bg-secondary { background-color: var(--current-secondary); }
+.bg-surface { background-color: var(--current-surface); }
+.bg-surface-container { background-color: var(--current-surface-container); }
+
+/* Border utilities */
+.border-rounded { border-radius: var(--md-shape-corner-sm); }
+.border-rounded-lg { border-radius: var(--md-shape-corner-md); }
+.border-pill { border-radius: var(--md-shape-corner-full); }
+
+/* Shadow utilities */
+.shadow-1 { box-shadow: var(--current-elevation-1); }
+.shadow-2 { box-shadow: var(--current-elevation-2); }
+.shadow-3 { box-shadow: var(--current-elevation-3); }
+
+/* Transition utilities */
+.transition-all { transition: all 0.2s ease; }
+.transition-fast { transition: all 0.1s ease; }
+.transition-slow { transition: all 0.3s ease; }
+
+/* Responsive utilities */
+.hide-mobile { display: block; }
+.show-mobile { display: none; }
+
+@media (max-width: 768px) {
+  .hide-mobile { display: none; }
+  .show-mobile { display: block; }
+}

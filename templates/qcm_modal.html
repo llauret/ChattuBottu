@@ -1,8 +1,7 @@
 <!-- ===================== QCM MODAL ===================== -->
-<div id="qcmModal" class="qcm-modal">
-    <div class="qcm-modal-content">
-        <div class="qcm-header">
-            <h2 id="qcmTitle">QCM</h2>
+<div id="qcmModal" class="qcm-modal" style="display: none;">
+    <div class="qcm-modal-content">        <div class="qcm-modal-header">
+            <h2 id="qcmTitle" class="qcm-modal-title">QCM</h2>
             <button class="qcm-close-btn" onclick="closeQCM()">
                 <span class="material-icons">close</span>
             </button>
@@ -34,16 +33,14 @@
 </div>
 
 <!-- ===================== QCM RESULTS MODAL ===================== -->
-<div id="qcmResultsModal" class="qcm-modal">
-    <div class="qcm-modal-content">
-        <div class="qcm-header">
-            <h2>Résultats du QCM</h2>
+<div id="qcmResultsModal" class="qcm-modal" style="display: none;">
+    <div class="qcm-modal-content">        <div class="qcm-modal-header">
+            <h2 class="qcm-modal-title">Résultats du QCM</h2>
             <button class="qcm-close-btn" onclick="closeQCMResults()">
                 <span class="material-icons">close</span>
             </button>
         </div>
-        
-        <div id="qcmResultsContent" class="qcm-results-content">
+          <div id="qcmResultsContent">
             <!-- Résultats générés dynamiquement -->
         </div>
         
