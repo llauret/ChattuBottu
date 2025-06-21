@@ -82,6 +82,17 @@ class LLMService:
             return chain.invoke({"context": context})
         except Exception as e:
             return f"Erreur lors de la génération de la fiche de révision : {e}"
+    
+    def get_completion(self, prompt: str) -> str:
+        """Obtenir une completion simple du LLM"""
+        try:
+            simple_prompt = ChatPromptTemplate.from_messages([
+                ("user", "{prompt}")
+            ])
+            chain = simple_prompt | self.llm | StrOutputParser()
+            return chain.invoke({"prompt": prompt})
+        except Exception as e:
+            raise Exception(f"Erreur lors de l'appel au LLM : {e}")
 
 # Instance globale du service LLM
 llm_service = LLMService()

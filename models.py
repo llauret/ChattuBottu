@@ -65,5 +65,65 @@ class DocumentStore:
         self._documents.clear()
         self._ingested_content.clear()
 
+@dataclass 
+class QCMQuestion:
+    """Représente une question de QCM"""
+    id: str
+    question: str
+    options: List[str]  # Les options de réponse (A, B, C, D)
+    correct_answer: int  # Index de la bonne réponse (0, 1, 2, 3)
+    explanation: str  # Explication de la réponse
+
+@dataclass
+class QCM:
+    """Représente un QCM complet"""
+    id: str
+    title: str
+    questions: List[QCMQuestion]
+    created_at: datetime
+    based_on_documents: List[str]  # Noms des documents utilisés
+
+@dataclass
+class QCMResult:
+    """Résultat d'un QCM"""
+    qcm_id: str
+    user_answers: List[int]  # Index des réponses de l'utilisateur
+    score: int
+    total_questions: int
+    details: List[dict]  # Détails par question (correct/incorrect + explication)
+
+class QCMStore:
+    """Stockage des QCM et résultats"""
+    
+    def __init__(self):
+        self._qcms: List[QCM] = []
+        self._results: List[QCMResult] = []
+    
+    def add_qcm(self, qcm: QCM) -> None:
+        """Ajouter un QCM"""
+        self._qcms.append(qcm)
+    
+    def get_qcm(self, qcm_id: str) -> Optional[QCM]:
+        """Récupérer un QCM par ID"""
+        for qcm in self._qcms:
+            if qcm.id == qcm_id:
+                return qcm
+        return None
+    
+    def get_all_qcms(self) -> List[QCM]:
+        """Récupérer tous les QCM"""
+        return self._qcms.copy()
+    
+    def add_result(self, result: QCMResult) -> None:
+        """Ajouter un résultat de QCM"""
+        self._results.append(result)
+    
+    def get_results_for_qcm(self, qcm_id: str) -> List[QCMResult]:
+        """Récupérer les résultats d'un QCM"""
+        return [r for r in self._results if r.qcm_id == qcm_id]
+
 # Instance globale du stockage
 document_store = DocumentStore()
+
+# Instance globale du stockage QCM
+qcm_store = QCMStore()

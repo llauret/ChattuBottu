@@ -1,0 +1,56 @@
+<!-- ===================== QCM MODAL ===================== -->
+<div id="qcmModal" class="qcm-modal">
+    <div class="qcm-modal-content">
+        <div class="qcm-header">
+            <h2 id="qcmTitle">QCM</h2>
+            <button class="qcm-close-btn" onclick="closeQCM()">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div class="qcm-progress">
+            <div class="qcm-progress-bar">
+                <div id="qcmProgressFill" class="qcm-progress-fill"></div>
+            </div>
+            <span id="qcmProgressText">Question 1 / 5</span>
+        </div>
+        
+        <div id="qcmContent" class="qcm-content">
+            <!-- Contenu du QCM généré dynamiquement -->
+        </div>
+        
+        <div class="qcm-navigation">
+            <button id="qcmPrevBtn" class="qcm-nav-btn" onclick="previousQuestion()" disabled>
+                <span class="material-icons">arrow_back</span> Précédent
+            </button>
+            <button id="qcmNextBtn" class="qcm-nav-btn" onclick="nextQuestion()">
+                Suivant <span class="material-icons">arrow_forward</span>
+            </button>
+            <button id="qcmSubmitBtn" class="qcm-submit-btn" onclick="submitQCM()" style="display: none;">
+                <span class="material-icons">send</span> Terminer le QCM
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== QCM RESULTS MODAL ===================== -->
+<div id="qcmResultsModal" class="qcm-modal">
+    <div class="qcm-modal-content">
+        <div class="qcm-header">
+            <h2>Résultats du QCM</h2>
+            <button class="qcm-close-btn" onclick="closeQCMResults()">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div id="qcmResultsContent" class="qcm-results-content">
+            <!-- Résultats générés dynamiquement -->
+        </div>
+        
+        <div class="qcm-results-actions">
+            <button class="qcm-btn" onclick="closeQCMResults()">
+                <span class="material-icons">close</span> Fermer
+            </button>
+        </div>
+    </div>
+</div>

@@ -292,13 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize Drag and Drop
-    initializeDragAndDrop();
-
-    // Event listener pour le bouton de génération de fiches de révision
+    initializeDragAndDrop();    // Event listener pour le bouton de génération de fiches de révision
     const generateRevisionBtn = document.getElementById("generateRevisionBtn");
     if (generateRevisionBtn) {
       generateRevisionBtn.addEventListener("click", generateRevisionSheet);
     }
+    
+    // Event listener pour le bouton de génération de QCM
+    const generateQCMBtn = document.getElementById("generateQCMBtn");
+    if (generateQCMBtn) {
+      generateQCMBtn.addEventListener("click", generateQCM);
+    }
+    
+    // Charger la liste des QCM au démarrage
+    refreshQCMList();
 });
 
 // ===================== DRAG AND DROP FUNCTIONALITY =====================
@@ -616,4 +623,257 @@ function displayRevisionSheet(content) {
   
   chatbox.appendChild(messageDiv);
   chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+// ===================== QCM FUNCTIONALITY =====================
+let currentQCM = null;
+let currentQuestionIndex = 0;
+let userAnswers = [];
+
+function generateQCM() {
+  const btn = document.getElementById("generateQCMBtn");
+  const status = document.getElementById("qcmStatus");
+  const numQuestions = document.getElementById("numQuestions").value;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Génération...';
+  status.textContent = "Génération du QCM en cours...";
+  status.className = "qcm-status loading";
+  
+  fetch("/qcm/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ num_questions: parseInt(numQuestions) })
+  })
+  .then(response => response.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons">add_circle</span> Créer un QCM';
+    
+    if (data.success) {
+      status.textContent = "QCM généré avec succès !";
+      status.className = "qcm-status success";
+      currentQCM = data.qcm;
+      userAnswers = new Array(data.qcm.questions.length).fill(-1);
+      currentQuestionIndex = 0;
+      refreshQCMList();
+      openQCM(data.qcm);
+    } else {
+      status.textContent = data.error || "Erreur lors de la génération.";
+      status.className = "qcm-status error";
+    }
+  })
+  .catch(error => {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons">add_circle</span> Créer un QCM';
+    status.textContent = "Erreur de connexion.";
+    status.className = "qcm-status error";
+    console.error("Error:", error);
+  });
+}
+
+function openQCM(qcm) {
+  currentQCM = qcm;
+  currentQuestionIndex = 0;
+  userAnswers = new Array(qcm.questions.length).fill(-1);
+  
+  document.getElementById("qcmTitle").textContent = qcm.title;
+  document.getElementById("qcmModal").style.display = "flex";
+  updateQCMDisplay();
+}
+
+function closeQCM() {
+  document.getElementById("qcmModal").style.display = "none";
+  currentQCM = null;
+  currentQuestionIndex = 0;
+  userAnswers = [];
+}
+
+function updateQCMDisplay() {
+  if (!currentQCM) return;
+  
+  const question = currentQCM.questions[currentQuestionIndex];
+  const progressPercent = ((currentQuestionIndex + 1) / currentQCM.questions.length) * 100;
+  
+  // Mise à jour de la barre de progression
+  document.getElementById("qcmProgressFill").style.width = progressPercent + "%";
+  document.getElementById("qcmProgressText").textContent = 
+    `Question ${currentQuestionIndex + 1} / ${currentQCM.questions.length}`;
+  
+  // Affichage de la question
+  const content = document.getElementById("qcmContent");
+  content.innerHTML = `
+    <div class="qcm-question">
+      <h3>${question.question}</h3>
+      <div class="qcm-options">
+        ${question.options.map((option, index) => `
+          <label class="qcm-option ${userAnswers[currentQuestionIndex] === index ? 'selected' : ''}">
+            <input type="radio" name="qcm-answer" value="${index}" 
+                   ${userAnswers[currentQuestionIndex] === index ? 'checked' : ''}
+                   onchange="selectAnswer(${index})">
+            <span class="qcm-option-text">${String.fromCharCode(65 + index)}. ${option}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  // Mise à jour des boutons de navigation
+  document.getElementById("qcmPrevBtn").disabled = currentQuestionIndex === 0;
+  
+  if (currentQuestionIndex === currentQCM.questions.length - 1) {
+    document.getElementById("qcmNextBtn").style.display = "none";
+    document.getElementById("qcmSubmitBtn").style.display = "inline-flex";
+  } else {
+    document.getElementById("qcmNextBtn").style.display = "inline-flex";
+    document.getElementById("qcmSubmitBtn").style.display = "none";
+  }
+}
+
+function selectAnswer(answerIndex) {
+  userAnswers[currentQuestionIndex] = answerIndex;
+  
+  // Mise à jour visuelle
+  const options = document.querySelectorAll('.qcm-option');
+  options.forEach((option, index) => {
+    option.classList.toggle('selected', index === answerIndex);
+  });
+}
+
+function previousQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    updateQCMDisplay();
+  }
+}
+
+function nextQuestion() {
+  if (currentQuestionIndex < currentQCM.questions.length - 1) {
+    currentQuestionIndex++;
+    updateQCMDisplay();
+  }
+}
+
+function submitQCM() {
+  if (!currentQCM) return;
+  
+  // Vérifier que toutes les questions ont une réponse
+  const unanswered = userAnswers.findIndex(answer => answer === -1);
+  if (unanswered !== -1) {
+    alert(`Veuillez répondre à la question ${unanswered + 1}.`);
+    currentQuestionIndex = unanswered;
+    updateQCMDisplay();
+    return;
+  }
+  
+  // Soumettre les réponses
+  fetch("/qcm/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      qcm_id: currentQCM.id,
+      answers: userAnswers
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      closeQCM();
+      showQCMResults(data.result);
+    } else {
+      alert("Erreur lors de la soumission : " + data.error);
+    }
+  })
+  .catch(error => {
+    alert("Erreur de connexion lors de la soumission.");
+    console.error("Error:", error);
+  });
+}
+
+function showQCMResults(result) {
+  const modal = document.getElementById("qcmResultsModal");
+  const content = document.getElementById("qcmResultsContent");
+  
+  const scoreColor = result.percentage >= 80 ? '#4caf50' : 
+                    result.percentage >= 60 ? '#ff9800' : '#f44336';
+  
+  content.innerHTML = `
+    <div class="qcm-score">
+      <div class="qcm-score-circle" style="border-color: ${scoreColor};">
+        <span class="qcm-score-text" style="color: ${scoreColor};">
+          ${result.score}/${result.total_questions}
+        </span>
+        <span class="qcm-score-percent" style="color: ${scoreColor};">
+          ${result.percentage}%
+        </span>
+      </div>
+    </div>
+    
+    <div class="qcm-details">
+      <h3>Détail des réponses</h3>
+      ${result.details.map((detail, index) => `
+        <div class="qcm-detail-item ${detail.is_correct ? 'correct' : 'incorrect'}">
+          <div class="qcm-detail-question">
+            <strong>Question ${index + 1}:</strong> ${detail.question}
+          </div>
+          <div class="qcm-detail-answers">
+            <div class="qcm-detail-answer">
+              <span class="material-icons">${detail.is_correct ? 'check_circle' : 'cancel'}</span>
+              <strong>Votre réponse:</strong> ${String.fromCharCode(65 + detail.user_answer)}. ${detail.options[detail.user_answer]}
+            </div>
+            ${!detail.is_correct ? `
+              <div class="qcm-detail-answer correct-answer">
+                <span class="material-icons">check_circle</span>
+                <strong>Bonne réponse:</strong> ${String.fromCharCode(65 + detail.correct_answer)}. ${detail.options[detail.correct_answer]}
+              </div>
+            ` : ''}
+          </div>
+          <div class="qcm-detail-explanation">
+            <strong>Explication:</strong> ${detail.explanation}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  modal.style.display = "flex";
+}
+
+function closeQCMResults() {
+  document.getElementById("qcmResultsModal").style.display = "none";
+}
+
+function refreshQCMList() {
+  fetch("/qcm/list")
+  .then(response => response.json())
+  .then(data => {
+    const qcmList = document.getElementById("qcmList");
+    if (data.success && data.qcms.length > 0) {
+      qcmList.innerHTML = `
+        <h4>QCM disponibles</h4>
+        ${data.qcms.map(qcm => `
+          <div class="qcm-item">
+            <div class="qcm-item-info">
+              <span class="qcm-item-title">${qcm.title}</span>
+              <span class="qcm-item-meta">${qcm.total_questions} questions</span>
+            </div>
+            <button class="qcm-item-btn" onclick="startExistingQCM('${qcm.id}')">
+              <span class="material-icons">play_arrow</span>
+            </button>
+          </div>
+        `).join('')}
+      `;
+    } else {
+      qcmList.innerHTML = '<div class="qcm-item-empty">Aucun QCM disponible</div>';
+    }
+  })
+  .catch(error => {
+    console.error("Error fetching QCM list:", error);
+  });
+}
+
+function startExistingQCM(qcmId) {
+  // Pour l'instant, on ne peut que créer de nouveaux QCM
+  // Dans une version future, on pourrait permettre de refaire un QCM existant
+  alert("Fonctionnalité à venir : refaire un QCM existant");
 }
