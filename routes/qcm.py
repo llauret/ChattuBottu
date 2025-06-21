@@ -60,3 +60,13 @@ def list_qcms():
         "success": True,
         "qcms": qcms
     })
+
+@qcm_bp.route('/get/<qcm_id>', methods=['GET'])
+def get_qcm(qcm_id):
+    """Récupérer un QCM existant pour le refaire"""
+    qcm_data = qcm_service.get_qcm_by_id(qcm_id)
+    
+    if qcm_data["success"]:
+        return jsonify(qcm_data)
+    else:
+        return jsonify(qcm_data), 404

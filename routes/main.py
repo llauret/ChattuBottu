@@ -9,3 +9,9 @@ main_bp = Blueprint('main', __name__)
 def home():
     """Page d'accueil"""
     return render_template("index.html")
+
+
+@main_bp.route("/dashboard")
+def dashboard():
+    """Page dashboard"""
+    return render_template("dashboard.html")

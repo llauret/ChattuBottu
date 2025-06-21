@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import uuid
 
-
 @dataclass
 class Document:
     """Représente un document ingéré"""
@@ -15,7 +14,6 @@ class Document:
     upload_date: datetime
     file_type: str
     size: int
-
 
 class DocumentStore:
     """Stockage en mémoire des documents ingérés"""
@@ -68,7 +66,6 @@ class DocumentStore:
         self._documents.clear()
         self._ingested_content.clear()
 
-
 @dataclass 
 class QCMQuestion:
     """Représente une question de QCM"""
@@ -78,7 +75,6 @@ class QCMQuestion:
     correct_answer: int  # Index de la bonne réponse (0, 1, 2, 3)
     explanation: str  # Explication de la réponse
 
-
 @dataclass
 class QCM:
     """Représente un QCM complet"""
@@ -87,7 +83,6 @@ class QCM:
     questions: List[QCMQuestion]
     created_at: datetime
     based_on_documents: List[str]  # Noms des documents utilisés
-
 
 @dataclass
 class QCMResult:
@@ -104,7 +99,6 @@ class QCMResult:
     details: List[dict] = field(default_factory=list)
     themes: List[str] = field(default_factory=list)  # Thèmes abordés
 
-
 @dataclass
 class LearningSession:
     """Représente une session d'apprentissage"""
@@ -115,7 +109,6 @@ class LearningSession:
     activities: List[str] = field(default_factory=list)  # chat, qcm, mindmap, revision
     documents_consulted: List[str] = field(default_factory=list)
     qcm_results: List[str] = field(default_factory=list)  # IDs des résultats QCM
-
 
 @dataclass
 class UserProgress:
@@ -132,7 +125,6 @@ class UserProgress:
     last_activity: Optional[datetime] = None
     favorite_themes: List[str] = field(default_factory=list)
     weak_themes: List[str] = field(default_factory=list)
-
 
 class ProgressStore:
     """Stockage des données de progression"""
@@ -265,8 +257,7 @@ class QCMStore:
         """Récupérer un QCM par ID"""
         for qcm in self._qcms:
             if qcm.id == qcm_id:
-                return qcm
-        return None
+                return qcm        return None
     
     def get_all_qcms(self) -> List[QCM]:
         """Récupérer tous les QCM"""
@@ -275,6 +266,7 @@ class QCMStore:
     def add_result(self, result: QCMResult) -> None:
         """Ajouter un résultat de QCM"""
         self._results.append(result)
+        # Mettre à jour la progression sera fait depuis le service
     
     def get_results_for_qcm(self, qcm_id: str) -> List[QCMResult]:
         """Récupérer les résultats d'un QCM"""
@@ -283,7 +275,6 @@ class QCMStore:
     def get_all_results(self) -> List[QCMResult]:
         """Récupérer tous les résultats"""
         return self._results.copy()
-
 
 # Instances globales du stockage
 document_store = DocumentStore()

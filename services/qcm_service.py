@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from typing import List, Dict, Any
 
-from models import QCM, QCMQuestion, QCMResult, qcm_store, document_store
+from models import QCM, QCMQuestion, QCMResult, qcm_store, document_store, progress_store
 from services.llm_service import llm_service
 
 
@@ -322,16 +322,20 @@ JSON:"""
                 "options": question.options,
                 "explanation": question.explanation
             })
-        
-        # Créer et stocker le résultat
+          # Créer et stocker le résultat
         result = QCMResult(
             qcm_id=qcm_id,
+            qcm_title=qcm.title,
             user_answers=user_answers,
             score=score,
             total_questions=len(qcm.questions),
+            percentage=round((score / len(qcm.questions)) * 100, 1),
             details=details
         )
         qcm_store.add_result(result)
+        
+        # Mettre à jour les statistiques
+        progress_store.update_progress_with_result(result)
         
         return {
             "success": True,
@@ -356,6 +360,31 @@ JSON:"""
             }
             for qcm in qcms
         ]
+    
+    def get_qcm_by_id(self, qcm_id: str) -> Dict[str, Any]:
+        """Récupérer un QCM par son ID pour le refaire"""
+        qcm = qcm_store.get_qcm(qcm_id)
+        if not qcm:
+            return {
+                "success": False,
+                "error": "QCM introuvable"
+            }
+        
+        return {
+            "success": True,
+            "qcm": {
+                "id": qcm.id,
+                "title": qcm.title,
+                "questions": [
+                    {
+                        "id": q.id,
+                        "question": q.question,
+                        "options": q.options
+                    } for q in qcm.questions
+                ],
+                "total_questions": len(qcm.questions)
+            }
+        }
 
 
 # Instance globale du service QCM

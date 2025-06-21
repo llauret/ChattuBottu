@@ -1,0 +1,241 @@
+/* ===================== SIDEBAR STYLES ===================== */
+
+.info-box {
+  background-color: var(--current-surface-container-low);
+  border-radius: var(--md-shape-corner-md);
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--current-outline);
+  box-shadow: var(--current-elevation-1);
+}
+
+.info-box h2 {
+  color: var(--current-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-input-label-md {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: var(--current-surface);
+  border: 2px dashed var(--current-outline);
+  border-radius: var(--md-shape-corner-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--current-on-surface);
+  font-size: 0.875rem;
+}
+
+.file-input-label-md:hover {
+  border-color: var(--current-primary);
+  background-color: var(--current-primary-container);
+  color: var(--current-on-primary-container);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.upload-btn-md {
+  background-color: var(--current-primary);
+  color: var(--current-on-primary);
+  border: none;
+  border-radius: var(--md-shape-corner-md);
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--current-elevation-1);
+  transition: all 0.2s ease;
+}
+
+.upload-btn-md:hover {
+  background-color: var(--current-primary);
+  box-shadow: var(--current-elevation-2);
+  transform: translateY(-1px);
+}
+
+.upload-status-text {
+  font-size: 0.875rem;
+  margin-top: 8px;
+  min-height: 20px;
+  color: var(--current-on-surface-variant);
+}
+
+.info-text {
+  font-size: 0.875rem;
+  color: var(--current-on-surface-variant);
+  line-height: 1.4;
+  margin-top: 16px;
+}
+
+/* Revision Section */
+.revision-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--current-surface-container-low);
+  border-radius: var(--md-shape-corner-md);
+  border: 1px solid var(--current-outline);
+}
+
+.revision-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--current-secondary);
+  color: var(--current-on-secondary);
+  border: none;
+  border-radius: var(--md-shape-corner-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: var(--current-elevation-1);
+}
+
+.revision-btn:hover {
+  background: var(--current-secondary);
+  box-shadow: var(--current-elevation-2);
+  transform: translateY(-1px);
+}
+
+.revision-btn:disabled {
+  background: var(--current-outline);
+  color: var(--current-on-surface-variant);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.revision-status {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  min-height: 20px;
+}
+
+.revision-status.loading {
+  color: var(--current-primary);
+}
+
+.revision-status.success {
+  color: #2e7d32;
+}
+
+.revision-status.error {
+  color: var(--current-error);
+}
+
+/* Files List */
+.pdf-list-container {
+  margin-top: 20px;
+}
+
+.pdf-list-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--current-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: var(--current-surface);
+  border-radius: var(--md-shape-corner-sm);
+  border: 1px solid var(--current-outline);
+  transition: all 0.2s ease;
+}
+
+.pdf-item:hover {
+  background-color: var(--current-surface-container);
+  box-shadow: var(--current-elevation-1);
+}
+
+.pdf-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--current-on-surface);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-item-meta {
+  font-size: 0.75rem;
+  color: var(--current-on-surface-variant);
+}
+
+.pdf-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pdf-item-btn {
+  background: none;
+  border: 1px solid var(--current-outline);
+  border-radius: var(--md-shape-corner-xs);
+  padding: 6px;
+  color: var(--current-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+.pdf-item-btn:hover {
+  background-color: var(--current-surface-container);
+  color: var(--current-primary);
+  border-color: var(--current-primary);
+}
+
+.pdf-item-btn.delete:hover {
+  background-color: var(--current-error-container);
+  color: var(--current-error);
+  border-color: var(--current-error);
+}
+
+.pdf-item-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--current-on-surface-variant);
+  font-size: 0.875rem;
+  font-style: italic;
+}

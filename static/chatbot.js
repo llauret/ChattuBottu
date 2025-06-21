@@ -1,3 +1,94 @@
+// ===================== SESSION TRACKING =====================
+class SessionTracker {
+  constructor() {
+    this.sessionId = null;
+    this.sessionStartTime = null;
+    this.qcmStartTime = null;
+    this.init();
+  }
+  
+  async init() {
+    try {
+      const response = await fetch('/dashboard/session/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await response.json();
+      if (result.success) {
+        this.sessionId = result.session_id;
+        this.sessionStartTime = Date.now();
+        console.log('Session démarrée:', this.sessionId);
+      }
+    } catch (error) {
+      console.error('Erreur lors du démarrage de session:', error);
+    }
+  }
+  
+  async trackActivity(activity, document = null) {
+    try {
+      await fetch('/dashboard/activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          activity: activity,
+          document: document
+        })
+      });
+    } catch (error) {
+      console.error('Erreur lors du tracking:', error);
+    }
+  }
+  
+  startQCM() {
+    this.qcmStartTime = Date.now();
+    this.trackActivity('qcm');
+  }
+  
+  async completeQCM(qcmData) {
+    const completionTime = this.qcmStartTime ? (Date.now() - this.qcmStartTime) / 1000 : null;
+    
+    try {
+      await fetch('/dashboard/qcm/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...qcmData,
+          completion_time: completionTime
+        })
+      });
+    } catch (error) {
+      console.error('Erreur lors du tracking QCM:', error);
+    }
+  }
+  
+  async endSession() {
+    try {
+      await fetch('/dashboard/session/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la fin de session:', error);
+    }
+  }
+}
+
+// Instance globale du tracker
+const sessionTracker = new SessionTracker();
+
+// Terminer la session lors de la fermeture de la page
+window.addEventListener('beforeunload', () => {
+  sessionTracker.endSession();
+});
+
 // ===================== CHATBOT LOGIC =====================
 function sendMessage() {
   var userInput = document.getElementById("userInput");
@@ -19,6 +110,10 @@ function sendMessage() {
   userInput.value = "";
   clearReplyContext();
   showLoading();
+  
+  // Tracker l'activité de chat
+  sessionTracker.trackActivity('chat');
+  
   fetch(`/get?msg=${encodeURIComponent(finalMessage)}`)
     .then((response) => response.text())
     .then((data) => {
@@ -162,35 +257,76 @@ function fetchPdfs() { // Renamed from refreshPdfList to better reflect it fetch
     .then((data) => {
       var pdfList = document.getElementById("pdfList");
       pdfList.innerHTML = ""; // Clear existing list
+      
+      // Ajouter le titre de la section s'il y a des fichiers
       if (data.pdfs && data.pdfs.length > 0) {
+        var titleDiv = document.createElement("div");
+        titleDiv.className = "pdf-list-title";
+        titleDiv.innerHTML = '<span class="material-icons">folder</span> Documents ingérés';
+        pdfList.appendChild(titleDiv);
+        
+        var listContainer = document.createElement("div");
+        listContainer.className = "pdf-list";
+        
         data.pdfs.forEach((pdf) => {
           var item = document.createElement("div");
           item.className = "pdf-item";
           
-          var name = document.createElement("span");
+          var info = document.createElement("div");
+          info.className = "pdf-info";
+          
+          var icon = document.createElement("span");
+          icon.className = "material-icons pdf-icon";
+          icon.textContent = "picture_as_pdf";
+          
+          var details = document.createElement("div");
+          details.className = "pdf-details";
+          
+          var name = document.createElement("div");
           name.className = "pdf-name";
-          name.innerHTML = '<span class="material-icons">picture_as_pdf</span> ' + pdf; // Using Material Icon
+          name.textContent = pdf;
+          
+          var meta = document.createElement("div");
+          meta.className = "pdf-meta";
+          meta.innerHTML = '<span>Document</span>';
+          
+          details.appendChild(name);
+          details.appendChild(meta);
+          
+          info.appendChild(icon);
+          info.appendChild(details);
+          
+          var actions = document.createElement("div");
+          actions.className = "pdf-actions";
           
           var delBtn = document.createElement("button");
-          delBtn.className = "delete-btn-md ripple-effect-container"; // Apply MD3 style and ripple
+          delBtn.className = "pdf-action-btn delete ripple-effect-container";
           delBtn.title = "Supprimer le fichier";
           
           var delIcon = document.createElement("span");
           delIcon.classList.add("material-icons");
-          delIcon.textContent = "delete"; // Material Icon for delete
+          delIcon.textContent = "delete";
           delBtn.appendChild(delIcon);
           
           delBtn.onclick = function () {
             deletePdf(pdf);
           };
           
-          item.appendChild(name);
-          item.appendChild(delBtn);
-          pdfList.appendChild(item);
+          actions.appendChild(delBtn);
+          
+          item.appendChild(info);
+          item.appendChild(actions);
+          listContainer.appendChild(item);
         });
+        
+        pdfList.appendChild(listContainer);
       } else {
-        pdfList.innerHTML = '<div class="pdf-item-empty"><span class="material-icons">info</span> Aucun PDF ingéré.</div>';
+        var emptyState = document.createElement("div");
+        emptyState.className = "pdf-empty-state";
+        emptyState.innerHTML = '<div class="pdf-empty-icon"><span class="material-icons">folder_open</span></div><div>Aucun document ingéré</div>';
+        pdfList.appendChild(emptyState);
       }
+      
       // Re-apply ripple effect to newly added buttons if not using event delegation
       if (typeof applyRippleEffect === 'function') {
         applyRippleEffect(); 
@@ -199,7 +335,10 @@ function fetchPdfs() { // Renamed from refreshPdfList to better reflect it fetch
     .catch(error => {
       console.error("Error fetching PDF list:", error);
       var pdfList = document.getElementById("pdfList");
-      pdfList.innerHTML = '<div class="pdf-item-empty"><span class="material-icons">error</span> Erreur au chargement des PDFs.</div>';
+      var errorState = document.createElement("div");
+      errorState.className = "pdf-empty-state";
+      errorState.innerHTML = '<div class="pdf-empty-icon"><span class="material-icons">error</span></div><div>Erreur au chargement des documents</div>';
+      pdfList.appendChild(errorState);
     });
 }
 
@@ -419,12 +558,16 @@ function handleFileUpload(files) {
         method: "POST",
         body: formData,
     })
-    .then((response) => response.json())
-    .then((data) => {
+    .then((response) => response.json())    .then((data) => {
         if (data.success) {
             uploadStatus.textContent = "Fichier(s) ingéré(s) avec succès !";
             uploadStatus.style.color = "var(--current-primary)"; // Use theme color
             fetchPdfs(); // Refresh PDF list
+            
+            // Tracker l'activité d'upload de documents
+            for (let i = 0; i < files.length; i++) {
+                sessionTracker.trackActivity('document_upload', files[i].name);
+            }
         } else {
             uploadStatus.textContent = data.message || "Erreur lors de l'ingestion.";
             uploadStatus.style.color = "var(--current-error)";
@@ -565,6 +708,9 @@ function generateRevisionSheet() {
   status.textContent = "Génération de la fiche de révision en cours...";
   status.className = "revision-status loading";
   
+  // Tracker l'activité de génération de révision
+  sessionTracker.trackActivity('revision_generation');
+  
   fetch("/generate_revision_sheet", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -640,6 +786,9 @@ function generateQCM() {
   status.textContent = "Génération du QCM en cours...";
   status.className = "qcm-status loading";
   
+  // Tracker l'activité de génération de QCM
+  sessionTracker.trackActivity('qcm_generation');
+  
   fetch("/qcm/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -657,6 +806,8 @@ function generateQCM() {
       userAnswers = new Array(data.qcm.questions.length).fill(-1);
       currentQuestionIndex = 0;
       refreshQCMList();
+      // Démarrer le tracking du QCM
+      sessionTracker.startQCM();
       openQCM(data.qcm);
     } else {
       status.textContent = data.error || "Erreur lors de la génération.";
@@ -778,6 +929,17 @@ function submitQCM() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      // Tracker la completion du QCM
+      sessionTracker.completeQCM({
+        qcm_id: currentQCM.id,
+        qcm_title: currentQCM.title,
+        user_answers: userAnswers,
+        score: data.result.score,
+        total_questions: data.result.total_questions,
+        percentage: data.result.percentage,
+        details: data.result.details
+      });
+      
       closeQCM();
       showQCMResults(data.result);
     } else {
@@ -873,7 +1035,24 @@ function refreshQCMList() {
 }
 
 function startExistingQCM(qcmId) {
-  // Pour l'instant, on ne peut que créer de nouveaux QCM
-  // Dans une version future, on pourrait permettre de refaire un QCM existant
-  alert("Fonctionnalité à venir : refaire un QCM existant");
+  // Charger un QCM existant et l'afficher
+  fetch(`/qcm/get/${qcmId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Réinitialiser l'état du QCM pour un nouveau passage
+        currentQCM = data.qcm;
+        userAnswers = new Array(data.qcm.questions.length).fill(-1);
+        currentQuestionIndex = 0;
+        
+        // Ouvrir le QCM dans le modal
+        openQCM(data.qcm);
+      } else {
+        alert("Erreur lors du chargement du QCM : " + (data.error || "Erreur inconnue"));
+      }
+    })
+    .catch(error => {
+      console.error("Erreur lors du chargement du QCM:", error);
+      alert("Erreur de connexion lors du chargement du QCM");
+    });
 }

@@ -12,6 +12,7 @@ from routes.main import main_bp
 from routes.chat import chat_bp
 from routes.files import files_bp
 from routes.qcm import qcm_bp
+from routes.dashboard import dashboard_bp
 
 def create_app():
     """Factory pour créer l'application Flask"""
@@ -21,12 +22,12 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
     app.config['DEBUG'] = config.DEBUG
-    app.config['SECRET_KEY'] = config.SECRET_KEY
-      # Enregistrement des blueprints
+    app.config['SECRET_KEY'] = config.SECRET_KEY    # Enregistrement des blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(qcm_bp)
+    app.register_blueprint(dashboard_bp)
     
     return app
 
