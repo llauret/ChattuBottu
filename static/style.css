@@ -58,20 +58,18 @@
   --md-elevation-dark-3: 0px 1px 3px rgba(0,0,0,0.6), 0px 4px 8px 3px rgba(0,0,0,0.4);
   --md-elevation-dark-4: 0px 2px 3px rgba(0,0,0,0.6), 0px 6px 10px 4px rgba(0,0,0,0.4);
   --md-elevation-dark-5: 0px 4px 4px rgba(0,0,0,0.6), 0px 8px 12px 6px rgba(0,0,0,0.4);
-
   /* Color Roles (Dark Theme) */
   --md-sys-color-primary-dark: #9ecaff;
   --md-sys-color-on-primary-dark: #003258;
   --md-sys-color-primary-container-dark: #00497d;
-  --md-sys-color-on-primary-container-dark: #d1e4ff;
+  --md-sys-color-on-primary-container-dark: #ffffff;
   --md-sys-color-secondary-dark: #bac7db;
   --md-sys-color-on-secondary-dark: #253140;
   --md-sys-color-secondary-container-dark: #3b4858;
-  --md-sys-color-on-secondary-container-dark: #d7e3f7;
-  --md-sys-color-tertiary-dark: #d6bee4;
+  --md-sys-color-on-secondary-container-dark: #ffffff;  --md-sys-color-tertiary-dark: #d6bee4;
   --md-sys-color-on-tertiary-dark: #3b2948;
   --md-sys-color-tertiary-container-dark: #523f5f;
-  --md-sys-color-on-tertiary-container-dark: #f2daff;
+  --md-sys-color-on-tertiary-container-dark: #ffffff;
   --md-sys-color-error-dark: #ffb4ab;
   --md-sys-color-on-error-dark: #690005;
   --md-sys-color-error-container-dark: #93000a;
@@ -1032,4 +1030,123 @@ a:hover {
 }
 */
 
-/* ...rest of the styles... */
+/* ===================== REVISION SHEET STYLES ===================== */
+.revision-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--md-sys-color-surface-container-low-light);
+  border-radius: var(--md-shape-corner-md);
+  border: 1px solid var(--md-sys-color-outline-light);
+}
+
+.revision-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--md-sys-color-tertiary-light);
+  color: var(--md-sys-color-on-tertiary-light);
+  border: none;
+  border-radius: var(--md-shape-corner-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  box-shadow: var(--md-elevation-light-1);
+}
+
+.revision-btn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary-light) 90%, white);
+  box-shadow: var(--md-elevation-light-2);
+}
+
+.revision-btn:disabled {
+  background: var(--md-sys-color-outline-light);
+  color: var(--md-sys-color-on-surface-variant-light);
+  cursor: not-allowed;
+}
+
+.revision-status {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  min-height: 20px;
+}
+
+.revision-status.loading {
+  color: var(--md-sys-color-primary-light);
+}
+
+.revision-status.success {
+  color: #2e7d32;
+}
+
+.revision-status.error {
+  color: var(--md-sys-color-error-light);
+}
+
+.revision-message {
+  background: var(--md-sys-color-tertiary-container-light) !important;
+  border: 1px solid var(--md-sys-color-tertiary-light);
+  border-left: 4px solid var(--md-sys-color-tertiary-light);
+}
+
+.revision-message .icon {
+  color: var(--md-sys-color-tertiary-light);
+}
+
+/* Mode sombre - corrections spécifiques pour les messages */
+[data-theme="dark"] .revision-section {
+  background: var(--current-surface-container-low);
+  border: 1px solid var(--current-outline);
+}
+
+[data-theme="dark"] .revision-btn {
+  background: var(--current-tertiary);
+  color: var(--current-on-tertiary);
+}
+
+[data-theme="dark"] .revision-btn:hover {
+  background: color-mix(in srgb, var(--current-tertiary) 90%, white);
+}
+
+[data-theme="dark"] .revision-message {
+  background: var(--current-tertiary-container) !important;
+  border: 1px solid var(--current-tertiary);
+  border-left: 4px solid var(--current-tertiary);
+  color: var(--current-on-tertiary-container) !important;
+}
+
+[data-theme="dark"] .revision-message .icon {
+  color: var(--current-tertiary) !important;
+}
+
+/* Corrections générales pour le texte des messages en mode sombre */
+[data-theme="dark"] .message {
+  color: var(--current-on-surface) !important;
+}
+
+[data-theme="dark"] .user-message {
+  color: var(--current-on-primary-container) !important;
+}
+
+[data-theme="dark"] .bot-message {
+  color: var(--current-on-secondary-container) !important;
+}
+
+[data-theme="dark"] .message h1,
+[data-theme="dark"] .message h2,
+[data-theme="dark"] .message h3,
+[data-theme="dark"] .message h4,
+[data-theme="dark"] .message h5,
+[data-theme="dark"] .message h6 {
+  color: var(--current-on-surface) !important;
+}
+
+[data-theme="dark"] .message p,
+[data-theme="dark"] .message li,
+[data-theme="dark"] .message span {
+  color: inherit !important;
+}

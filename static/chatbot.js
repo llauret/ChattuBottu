@@ -294,7 +294,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Drag and Drop
     initializeDragAndDrop();
 
-    // Any other initializations
+    // Event listener pour le bouton de génération de fiches de révision
+    const generateRevisionBtn = document.getElementById("generateRevisionBtn");
+    if (generateRevisionBtn) {
+      generateRevisionBtn.addEventListener("click", generateRevisionSheet);
+    }
 });
 
 // ===================== DRAG AND DROP FUNCTIONALITY =====================
@@ -544,8 +548,72 @@ function handleEscapeForReply(event) {
     }
 }
 
-/* ... sendMessage and other functions remain largely the same ... */
-/* Ensure the sendMessage function correctly uses activeReplyContext and calls clearReplyContext */
+// ===================== REVISION SHEET GENERATION =====================
+function generateRevisionSheet() {
+  const btn = document.getElementById("generateRevisionBtn");
+  const status = document.getElementById("revisionStatus");
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Génération...';
+  status.textContent = "Génération de la fiche de révision en cours...";
+  status.className = "revision-status loading";
+  
+  fetch("/generate_revision_sheet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({})
+  })
+  .then(response => response.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons">description</span> Générer une fiche de révision';
+    
+    if (data.success) {
+      status.textContent = "Fiche de révision générée avec succès !";
+      status.className = "revision-status success";
+      displayRevisionSheet(data.content);
+    } else {
+      status.textContent = "Erreur lors de la génération.";
+      status.className = "revision-status error";
+    }
+  })
+  .catch(error => {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons">description</span> Générer une fiche de révision';
+    status.textContent = "Erreur de connexion.";
+    status.className = "revision-status error";
+    console.error("Error:", error);
+  });
+}
 
-// Example of where applyRippleEffect might be called if it's not global or on DOMContentLoaded
-// document.addEventListener('DOMContentLoaded', () => { applyRippleEffect(); });
+function displayRevisionSheet(content) {
+  // Afficher la fiche dans le chat comme un message spécial
+  var chatbox = document.getElementById("chatbox");
+  var messageDiv = document.createElement("div");
+  messageDiv.classList.add("message", "revision-message");
+  
+  var icon = document.createElement("span");
+  icon.classList.add("icon");
+  icon.innerHTML = '<span class="material-icons">description</span>';
+  messageDiv.appendChild(icon);
+  
+  var textSpan = document.createElement("span");
+  textSpan.innerHTML = window.marked.parse(content);
+  messageDiv.appendChild(textSpan);
+  
+  // Ajout du bouton TTS pour la fiche
+  var ttsBtn = document.createElement("button");
+  ttsBtn.className = "tts-btn";
+  ttsBtn.title = "Lire la fiche de révision";
+  ttsBtn.innerHTML = '<span class="material-icons">volume_up</span>';
+  ttsBtn.onclick = function () {
+    ttsBtn.classList.add("playing");
+    speakText(stripMarkdown(content), function() {
+      ttsBtn.classList.remove("playing");
+    });
+  };
+  messageDiv.appendChild(ttsBtn);
+  
+  chatbox.appendChild(messageDiv);
+  chatbox.scrollTop = chatbox.scrollHeight;
+}
