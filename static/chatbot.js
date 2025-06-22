@@ -1056,3 +1056,203 @@ function startExistingQCM(qcmId) {
       alert("Erreur de connexion lors du chargement du QCM");
     });
 }
+
+// ===================== DASHBOARD MODAL FUNCTIONS =====================
+
+function openDashboardModal() {
+  const modal = document.getElementById('dashboardModal');
+  const content = document.getElementById('dashboardContent');
+  
+  // Afficher la modal
+  modal.style.display = 'flex';
+  
+  // Charger le contenu du dashboard
+  loadDashboardContent();
+}
+
+function closeDashboardModal() {
+  const modal = document.getElementById('dashboardModal');
+  modal.style.display = 'none';
+}
+
+function loadDashboardContent() {
+  const content = document.getElementById('dashboardContent');
+  
+  // Afficher le spinner de chargement
+  content.innerHTML = `
+    <div class="loading-spinner">
+      <span class="material-icons rotating">refresh</span>
+      <p>Chargement des statistiques...</p>
+    </div>
+  `;
+    // Charger les données du dashboard
+  fetch('/dashboard/data')
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        displayDashboardContent(result.data);
+      } else {
+        throw new Error(result.error || 'Erreur inconnue');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur lors du chargement du dashboard:', error);
+      content.innerHTML = `
+        <div class="error-message">
+          <span class="material-icons">error</span>
+          <p>Erreur lors du chargement des statistiques.</p>
+          <button class="retry-btn" onclick="loadDashboardContent()">
+            <span class="material-icons">refresh</span>
+            Réessayer
+          </button>
+        </div>
+      `;
+    });
+}
+
+function displayDashboardContent(data) {
+  const content = document.getElementById('dashboardContent');
+  
+  content.innerHTML = `
+    <div class="dashboard-overview">
+      <div class="dashboard-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">quiz</span>
+          </div>
+          <div class="stat-content">
+            <h3>${data.total_qcm || 0}</h3>
+            <p>QCM Complétés</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">school</span>
+          </div>
+          <div class="stat-content">
+            <h3>${data.average_score || 0}%</h3>
+            <p>Score Moyen</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">chat</span>
+          </div>
+          <div class="stat-content">
+            <h3>${data.total_messages || 0}</h3>
+            <p>Messages Échangés</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">description</span>
+          </div>
+          <div class="stat-content">
+            <h3>${data.total_files || 0}</h3>
+            <p>Fichiers Ingérés</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dashboard-charts">
+        <div class="chart-container">
+          <h3>Progression des Scores</h3>
+          <canvas id="scoreChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Activité Récente</h3>
+          <div class="activity-list">
+            ${data.recent_activities ? data.recent_activities.map(activity => `
+              <div class="activity-item">
+                <span class="material-icons">${getActivityIcon(activity.type)}</span>
+                <div class="activity-content">
+                  <p>${activity.description}</p>
+                  <small>${formatDate(activity.timestamp)}</small>
+                </div>
+              </div>
+            `).join('') : '<p>Aucune activité récente</p>'}
+          </div>
+        </div>
+      </div>
+      
+      <div class="dashboard-recommendations">
+        <h3>Recommandations</h3>
+        <div class="recommendations-list">
+          ${data.recommendations ? data.recommendations.map(rec => `
+            <div class="recommendation-item">
+              <span class="material-icons">${rec.icon}</span>
+              <div class="recommendation-content">
+                <h4>${rec.title}</h4>
+                <p>${rec.description}</p>
+              </div>
+            </div>
+          `).join('') : '<p>Aucune recommandation disponible</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Initialiser les graphiques si Chart.js est disponible
+  if (typeof Chart !== 'undefined' && data.score_history) {
+    initializeScoreChart(data.score_history);
+  }
+}
+
+function getActivityIcon(type) {
+  switch(type) {
+    case 'qcm': return 'quiz';
+    case 'chat': return 'chat';
+    case 'upload': return 'upload_file';
+    case 'revision': return 'school';
+    default: return 'info';
+  }
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function initializeScoreChart(scoreHistory) {
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: scoreHistory.map(item => formatDate(item.date)),
+      datasets: [{
+        label: 'Score (%)',
+        data: scoreHistory.map(item => item.score),
+        borderColor: 'var(--current-primary)',
+        backgroundColor: 'var(--current-primary-container)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100
+        }
+      }
+    }
+  });
+}
+
+// Fermer la modal en cliquant à l'extérieur
+document.addEventListener('click', function(event) {
+  const dashboardModal = document.getElementById('dashboardModal');
+  if (event.target === dashboardModal) {
+    closeDashboardModal();
+  }
+});
