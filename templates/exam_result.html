@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats de l'Examen - vIAzzi</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        .result-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .result-header {
+            text-align: center;
+            padding: 30px;
+            background: var(--surface-container);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid var(--outline-variant);
+        }
+        
+        .result-title {
+            margin: 0 0 20px 0;
+            color: var(--on-surface);
+        }
+        
+        .score-display {
+            font-size: 3em;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        
+        .score-display.passed {
+            color: var(--success);
+        }
+        
+        .score-display.failed {
+            color: var(--error);
+        }
+        
+        .result-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .result-badge.passed {
+            background: var(--success-container);
+            color: var(--on-success-container);
+        }
+        
+        .result-badge.failed {
+            background: var(--error-container);
+            color: var(--on-error-container);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--outline-variant);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            background: var(--primary-container);
+            color: var(--on-primary-container);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--on-surface);
+            margin: 0;
+        }
+        
+        .stat-label {
+            color: var(--on-surface-variant);
+            font-size: 0.9em;
+            margin: 8px 0 0 0;
+        }
+        
+        .questions-review {
+            margin-top: 40px;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--on-surface);
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .question-result {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--outline-variant);
+        }
+        
+        .question-result.correct {
+            border-left-color: var(--success);
+            background: var(--success-container);
+        }
+        
+        .question-result.incorrect {
+            border-left-color: var(--error);
+            background: var(--error-container);
+        }
+        
+        .question-result.partial {
+            border-left-color: var(--warning);
+            background: var(--warning-container);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .question-number {
+            background: var(--primary);
+            color: var(--on-primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .question-points {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .points-earned {
+            color: var(--success);
+        }
+        
+        .points-total {
+            color: var(--on-surface-variant);
+        }
+        
+        .question-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: var(--on-surface);
+            margin: 15px 0;
+        }
+        
+        .answer-section {
+            margin: 15px 0;
+        }
+        
+        .answer-label {
+            font-weight: 500;
+            color: var(--on-surface);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .answer-content {
+            padding: 12px;
+            border-radius: 8px;
+            background: var(--surface-container-low);
+            border: 1px solid var(--outline-variant);
+        }
+        
+        .answer-content.correct-answer {
+            background: var(--success-container);
+            border-color: var(--success);
+        }
+        
+        .answer-content.student-answer {
+            background: var(--surface-container);
+        }
+        
+        .answer-content.incorrect-answer {
+            background: var(--error-container);
+            border-color: var(--error);
+        }
+        
+        .explanation {
+            background: var(--tertiary-container);
+            color: var(--on-tertiary-container);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid var(--tertiary);
+        }
+        
+        .explanation-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn-primary {
+            background: var(--primary);
+            color: var(--on-primary);
+        }
+        
+        .action-btn-secondary {
+            background: var(--secondary);
+            color: var(--on-secondary);
+        }
+        
+        .action-btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .loading {
+            display: block;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .result-container {
+                padding: 15px;
+            }
+            
+            .score-display {
+                font-size: 2.5em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="result-container">
+        <!-- Chargement -->
+        <div id="loading" class="loading">
+            <span class="material-icons rotating">refresh</span>
+            <p>Chargement des résultats...</p>
+        </div>
+        
+        <!-- Contenu des résultats -->
+        <div id="resultContent" style="display: none;">
+            <!-- En-tête des résultats -->
+            <div class="result-header">
+                <h1 id="examTitle" class="result-title">Résultats de l'Examen</h1>
+                <div id="scoreDisplay" class="score-display">--/--</div>
+                <div id="resultBadge" class="result-badge">
+                    <span class="material-icons">help</span>
+                    <span>Évaluation</span>
+                </div>
+                <p id="completedAt" style="margin-top: 20px; color: var(--on-surface-variant);"></p>
+            </div>
+            
+            <!-- Statistiques -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="material-icons">percent</span>
+                    </div>
+                    <div id="percentage" class="stat-value">--%</div>
+                    <p class="stat-label">Pourcentage</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="material-icons">check_circle</span>
+                    </div>
+                    <div id="correctAnswers" class="stat-value">--</div>
+                    <p class="stat-label">Bonnes Réponses</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="material-icons">quiz</span>
+                    </div>
+                    <div id="totalQuestions" class="stat-value">--</div>
+                    <p class="stat-label">Questions Total</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="material-icons">schedule</span>
+                    </div>
+                    <div id="timeTaken" class="stat-value">--</div>
+                    <p class="stat-label">Temps Utilisé</p>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="actions">
+                <a href="/exam/page" class="action-btn action-btn-primary">
+                    <span class="material-icons">assignment</span>
+                    Autres Examens
+                </a>
+                <button onclick="window.print()" class="action-btn action-btn-outline">
+                    <span class="material-icons">print</span>
+                    Imprimer
+                </button>
+                <a href="/" class="action-btn action-btn-secondary">
+                    <span class="material-icons">home</span>
+                    Accueil
+                </a>
+            </div>
+            
+            <!-- Révision des questions -->
+            <div class="questions-review">
+                <h2 class="section-title">
+                    <span class="material-icons">rate_review</span>
+                    Révision Détaillée
+                </h2>
+                <div id="questionsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const resultId = '{{ result_id }}';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadResult();
+        });
+
+        function loadResult() {
+            fetch(`/exam/result/${resultId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayResult(data.result);
+                    } else {
+                        alert(`Erreur: ${data.error}`);
+                        window.location.href = '/exam/page';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors du chargement des résultats.');
+                    window.location.href = '/exam/page';
+                });
+        }
+
+        function displayResult(result) {
+            // Masquer le chargement
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('resultContent').style.display = 'block';
+            
+            // Titre et informations générales
+            document.getElementById('examTitle').textContent = result.exam_title;
+            document.getElementById('completedAt').textContent = `Terminé le ${result.completed_at}`;
+            
+            // Score principal
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.textContent = `${result.score}/${result.total_points}`;
+            scoreDisplay.className = `score-display ${result.passed ? 'passed' : 'failed'}`;
+            
+            // Badge de résultat
+            const resultBadge = document.getElementById('resultBadge');
+            resultBadge.className = `result-badge ${result.passed ? 'passed' : 'failed'}`;
+            resultBadge.innerHTML = `
+                <span class="material-icons">${result.passed ? 'check_circle' : 'cancel'}</span>
+                <span>${result.passed ? 'Réussi' : 'Échoué'}</span>
+            `;
+            
+            // Statistiques
+            document.getElementById('percentage').textContent = `${result.percentage.toFixed(1)}%`;
+            document.getElementById('correctAnswers').textContent = result.summary.correct_answers;
+            document.getElementById('totalQuestions').textContent = result.summary.total_questions;
+            document.getElementById('timeTaken').textContent = `${result.time_taken_minutes} min`;
+            
+            // Questions détaillées
+            displayQuestions(result.question_details);
+        }
+
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                
+                // Déterminer le statut de la réponse
+                let statusClass = 'incorrect';
+                let statusIcon = 'cancel';
+                
+                if (q.is_correct) {
+                    statusClass = 'correct';
+                    statusIcon = 'check_circle';
+                } else if (q.points_earned > 0) {
+                    statusClass = 'partial';
+                    statusIcon = 'partial_correct';
+                }
+                
+                questionDiv.className = `question-result ${statusClass}`;
+                
+                // Construire le contenu de la réponse selon le type
+                let answerContent = '';
+                
+                if (Array.isArray(q.correct_answer)) {
+                    // Question à choix multiples
+                    const studentAnswerText = q.student_answer !== null && q.student_answer !== undefined 
+                        ? (q.correct_answer[q.student_answer] || 'Réponse invalide')
+                        : 'Aucune réponse';
+                    const correctAnswerText = q.correct_answer[q.correct_answer.indexOf(q.correct_answer[q.correct_answer.length - 1])];
+                    
+                    answerContent = `
+                        <div class="answer-section">
+                            <span class="answer-label">Votre réponse :</span>
+                            <div class="answer-content student-answer ${q.is_correct ? '' : 'incorrect-answer'}">
+                                ${studentAnswerText}
+                            </div>
+                        </div>
+                        ${!q.is_correct ? `
+                            <div class="answer-section">
+                                <span class="answer-label">Réponse correcte :</span>
+                                <div class="answer-content correct-answer">
+                                    ${correctAnswerText}
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    // Question à réponse libre
+                    answerContent = `
+                        <div class="answer-section">
+                            <span class="answer-label">Votre réponse :</span>
+                            <div class="answer-content student-answer">
+                                ${q.student_answer || 'Aucune réponse'}
+                            </div>
+                        </div>
+                        <div class="answer-section">
+                            <span class="answer-label">Réponse attendue :</span>
+                            <div class="answer-content correct-answer">
+                                ${q.correct_answer}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <div class="question-number">${index + 1}</div>
+                        <div class="question-points">
+                            <span class="material-icons">${statusIcon}</span>
+                            <span class="points-earned">${q.points_earned}</span>
+                            <span>/</span>
+                            <span class="points-total">${q.max_points} pts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="question-text">${q.question}</div>
+                    
+                    ${answerContent}
+                    
+                    ${q.explanation ? `
+                        <div class="explanation">
+                            <div class="explanation-title">
+                                <span class="material-icons">lightbulb</span>
+                                Explication
+                            </div>
+                            <p>${q.explanation}</p>
+                        </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(questionDiv);
+            });
+        }
+    </script>
+</body>
+</html>

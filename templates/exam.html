@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examens - vIAzzi</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-only.css') }}">
+    
+    <style>
+        .exam-page {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--outline-variant);
+        }
+        
+        .exam-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .exam-title h1 {
+            margin: 0;
+            color: var(--on-surface);
+        }
+        
+        .exam-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .exam-card {
+            background: var(--surface-container);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--outline-variant);
+            transition: all 0.3s ease;
+        }
+        
+        .exam-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .exam-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .exam-card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--on-surface);
+            margin: 0 0 5px 0;
+        }
+        
+        .exam-card-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: var(--on-surface-variant);
+            margin-bottom: 15px;
+        }
+        
+        .exam-card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .exam-card-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .exam-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .exam-btn-primary {
+            background: var(--primary);
+            color: var(--on-primary);
+        }
+        
+        .exam-btn-secondary {
+            background: var(--secondary);
+            color: var(--on-secondary);
+        }
+        
+        .exam-btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .exam-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .generate-exam-form {
+            background: var(--surface-container-high);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--on-surface);
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--outline);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--on-surface);
+            font-size: 14px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading-spinner.active {
+            display: block;
+        }
+        
+        .rotating {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--on-surface-variant);
+        }
+        
+        .empty-state .material-icons {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+        
+        @media (max-width: 768px) {
+            .exam-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .exam-card-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .exam-controls {
+                justify-content: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body class="dashboard-page">
+    <!-- Navigation Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="header-title">
+                <span class="material-icons">assignment</span>
+                <h1>Examens Complets</h1>
+            </div>
+            <a href="/" class="back-btn">
+                <span class="material-icons">arrow_back</span>
+                Retour au Chat
+            </a>
+        </div>
+    </header>
+
+    <main class="exam-page">
+        <!-- Formulaire de génération d'examen -->
+        <section class="generate-exam-form">
+            <h2>Générer un Nouvel Examen</h2>
+            <form id="generateExamForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numQuestions">Nombre de questions</label>
+                        <input type="number" id="numQuestions" name="numQuestions" 
+                               min="5" max="50" value="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Durée (minutes)</label>
+                        <input type="number" id="duration" name="duration" 
+                               min="15" max="180" value="60" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="difficulty">Niveau de difficulté</label>
+                        <select id="difficulty" name="difficulty">
+                            <option value="easy">Facile</option>
+                            <option value="medium">Moyen</option>
+                            <option value="hard">Difficile</option>
+                            <option value="mixed" selected>Mixte</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="exam-btn exam-btn-primary">
+                    <span class="material-icons">add_circle</span>
+                    Générer l'Examen
+                </button>
+            </form>
+            
+            <div id="generateLoading" class="loading-spinner">
+                <span class="material-icons rotating">refresh</span>
+                <p>Génération de l'examen en cours...</p>
+            </div>
+        </section>
+
+        <!-- Liste des examens -->
+        <section class="exams-list">
+            <h2>Examens Disponibles</h2>
+            <div id="examsList">
+                <div class="loading-spinner active">
+                    <span class="material-icons rotating">refresh</span>
+                    <p>Chargement des examens...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadExams();
+            
+            // Gestionnaire du formulaire de génération
+            document.getElementById('generateExamForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                generateExam();
+            });
+        });
+
+        function loadExams() {
+            fetch('/exam/list')
+                .then(response => response.json())
+                .then(data => {
+                    const examsList = document.getElementById('examsList');
+                    
+                    if (data.success && data.exams.length > 0) {
+                        examsList.innerHTML = data.exams.map(exam => `
+                            <div class="exam-card">
+                                <div class="exam-card-header">
+                                    <div>
+                                        <h3 class="exam-card-title">${exam.title}</h3>
+                                        <div class="exam-card-meta">
+                                            <span>
+                                                <i class="material-icons">quiz</i>
+                                                ${exam.total_questions} questions
+                                            </span>
+                                            <span>
+                                                <i class="material-icons">schedule</i>
+                                                ${exam.duration_minutes} min
+                                            </span>
+                                            <span>
+                                                <i class="material-icons">star</i>
+                                                ${exam.total_points} points
+                                            </span>
+                                            <span>
+                                                <i class="material-icons">people</i>
+                                                ${exam.attempts} tentative(s)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <small>Créé le ${exam.created_at}</small>
+                                </div>
+                                
+                                <div class="exam-card-actions">
+                                    <a href="/exam/${exam.id}/take" class="exam-btn exam-btn-primary">
+                                        <span class="material-icons">play_arrow</span>
+                                        Passer l'Examen
+                                    </a>
+                                    <button onclick="viewStatistics('${exam.id}')" class="exam-btn exam-btn-outline">
+                                        <span class="material-icons">analytics</span>
+                                        Statistiques
+                                    </button>
+                                </div>
+                                
+                                ${exam.based_on_documents.length > 0 ? `
+                                    <div style="margin-top: 10px; font-size: 0.85em; color: var(--on-surface-variant);">
+                                        <strong>Basé sur:</strong> ${exam.based_on_documents.join(', ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('');
+                    } else {
+                        examsList.innerHTML = `
+                            <div class="empty-state">
+                                <span class="material-icons">assignment</span>
+                                <h3>Aucun examen disponible</h3>
+                                <p>Générez votre premier examen pour commencer !</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des examens:', error);
+                    document.getElementById('examsList').innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-icons">error</span>
+                            <h3>Erreur de chargement</h3>
+                            <p>Impossible de charger les examens.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        function generateExam() {
+            const form = document.getElementById('generateExamForm');
+            const formData = new FormData(form);
+            const loading = document.getElementById('generateLoading');
+            
+            const data = {
+                num_questions: parseInt(formData.get('numQuestions')),
+                duration_minutes: parseInt(formData.get('duration')),
+                difficulty_level: formData.get('difficulty')
+            };
+            
+            loading.classList.add('active');
+            form.style.opacity = '0.6';
+            
+            fetch('/exam/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                loading.classList.remove('active');
+                form.style.opacity = '1';
+                
+                if (result.success) {
+                    alert(`Examen généré avec succès !\nTitre: ${result.exam.title}\nQuestions: ${result.exam.total_questions}\nPoints: ${result.exam.total_points}`);
+                    loadExams(); // Recharger la liste
+                } else {
+                    alert(`Erreur: ${result.error}`);
+                }
+            })
+            .catch(error => {
+                loading.classList.remove('active');
+                form.style.opacity = '1';
+                console.error('Erreur:', error);
+                alert('Erreur lors de la génération de l\'examen.');
+            });
+        }
+
+        function viewStatistics(examId) {
+            fetch(`/exam/${examId}/statistics`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.statistics;
+                        let message = `Statistiques de l'examen:\n\n`;
+                        message += `Tentatives: ${stats.total_attempts}\n`;
+                        if (stats.total_attempts > 0) {
+                            message += `Score moyen: ${stats.average_score.toFixed(1)} points\n`;
+                            message += `Pourcentage moyen: ${stats.average_percentage.toFixed(1)}%\n`;
+                            message += `Taux de réussite: ${stats.pass_rate.toFixed(1)}%\n`;
+                            message += `Score min/max: ${stats.min_score}/${stats.max_score}\n`;
+                        }
+                        alert(message);
+                    } else {
+                        alert(`Erreur: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la récupération des statistiques.');
+                });
+        }
+    </script>
+</body>
+</html>

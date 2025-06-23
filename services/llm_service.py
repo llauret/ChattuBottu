@@ -8,6 +8,7 @@ from typing import Optional
 
 from config import config
 from models import document_store
+from services.external_resource_service import ExternalResourceService
 
 class LLMService:
     """Service pour les interactions avec le LLM Mistral"""
@@ -18,9 +19,11 @@ class LLMService:
             temperature=config.MISTRAL_TEMPERATURE,
             api_key=config.MISTRAL_API_KEY
         )
+        # Initialize external resource service
+        self.external_service = ExternalResourceService()
     
     def get_chatbot_response(self, user_message: str) -> str:
-        """Générer une réponse de chatbot contextuelle"""
+        """Générer une réponse de chatbot contextuelle avec ressources externes"""
         context = document_store.get_recent_content(limit=3)
         
         prompt = ChatPromptTemplate.from_messages([
@@ -32,7 +35,22 @@ class LLMService:
         chain = prompt | self.llm | StrOutputParser()
         
         try:
-            return chain.invoke({"context": context, "question": user_message})
+            # Generate the main response
+            main_response = chain.invoke({"context": context, "question": user_message})
+            
+            # Get external resources
+            external_resources = self.external_service.get_external_resources(user_message, main_response)
+            
+            # Format external resources as HTML
+            resources_html = self.external_service.format_external_resources_html(external_resources)
+            
+            # Combine main response with external resources
+            full_response = main_response
+            if resources_html:
+                full_response += "\n\n" + resources_html
+            
+            return full_response
+            
         except Exception as e:
             return f"Erreur lors de l'appel au LLM : {e}"
     

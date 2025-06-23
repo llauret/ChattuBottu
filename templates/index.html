@@ -14,9 +14,13 @@
                 <span class="material-icons">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <button class="theme-toggle-btn ripple-effect-container" id="themeToggle" title="Changer de thème">
-            <span class="material-icons" id="themeIcon">dark_mode</span>
-        </button>
+            <a href="{{ url_for('exam.exam_page') }}" class="navbar-btn">
+                <span class="material-icons">assignment</span>
+                <span>Examens</span>
+            </a>
+            <button class="theme-toggle-btn" onclick="toggleTheme()">
+                <span class="material-icons">brightness_6</span>
+            </button>
         </div>
     </nav>
 

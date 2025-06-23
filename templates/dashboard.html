@@ -24,10 +24,16 @@
                 <span class="material-icons">dashboard</span>
                 <h1>Dashboard - Suivi de progression</h1>
             </div>
-            <a href="/" class="back-btn">
-                <span class="material-icons">arrow_back</span>
-                Retour au Chat
-            </a>
+            <div class="header-actions">
+                <a href="{{ url_for('exam.exam_page') }}" class="back-btn" style="margin-right: 10px;">
+                    <span class="material-icons">assignment</span>
+                    Examens
+                </a>
+                <a href="/" class="back-btn">
+                    <span class="material-icons">arrow_back</span>
+                    Retour au Chat
+                </a>
+            </div>
         </div>
     </header>
 

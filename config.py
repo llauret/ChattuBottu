@@ -29,6 +29,9 @@ class Config:
     MAX_BOW_WORDS = int(os.getenv('MAX_BOW_WORDS', '200'))
     MAX_TEXT_LENGTH = int(os.getenv('MAX_TEXT_LENGTH', '8000'))
     
+    # External Resources (optional)
+    YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', None)  # Optional: for YouTube video search
+    
     def __init__(self):
         # Créer le dossier d'upload s'il n'existe pas
         os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erreur - vIAzzi</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 72px;
+            color: var(--error);
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--on-surface);
+            margin-bottom: 15px;
+        }
+        
+        .error-message {
+            font-size: 1.1em;
+            color: var(--on-surface-variant);
+            margin-bottom: 30px;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .error-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .error-btn-primary {
+            background: var(--primary);
+            color: var(--on-primary);
+        }
+        
+        .error-btn-secondary {
+            background: var(--secondary);
+            color: var(--on-secondary);
+        }
+        
+        .error-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-container">
+        <span class="material-icons error-icon">error</span>
+        <h1 class="error-title">Oops ! Une erreur s'est produite</h1>
+        <p class="error-message">{{ error or "Une erreur inattendue s'est produite. Veuillez réessayer." }}</p>
+        
+        <div class="error-actions">
+            <a href="/" class="error-btn error-btn-primary">
+                <span class="material-icons">home</span>
+                Retour à l'accueil
+            </a>
+            <a href="/exam/page" class="error-btn error-btn-secondary">
+                <span class="material-icons">assignment</span>
+                Examens
+            </a>
+        </div>
+    </div>
+</body>
+</html>

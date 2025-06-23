@@ -13,6 +13,7 @@ from routes.chat import chat_bp
 from routes.files import files_bp
 from routes.qcm import qcm_bp
 from routes.dashboard import dashboard_bp
+from routes.exam import exam_bp
 
 def create_app():
     """Factory pour créer l'application Flask"""
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(files_bp)
     app.register_blueprint(qcm_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(exam_bp)
     
     return app
 
