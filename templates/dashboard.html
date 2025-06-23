@@ -149,77 +149,80 @@
 
     <!-- JavaScript -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dataElement = document.getElementById('score-history-data');
-            try {
-                const scoreHistoryData = JSON.parse(dataElement.dataset.scores);
+        (function() {
+            let scoreChartInstance;
 
-                if (scoreHistoryData && scoreHistoryData.length > 0) {
-                    initializeScoreChart(scoreHistoryData);
-                } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                const dataElement = document.getElementById('score-history-data');
+                try {
+                    const scoreHistoryData = JSON.parse(dataElement.dataset.scores);
+
+                    if (scoreHistoryData && scoreHistoryData.length > 0) {
+                        initializeScoreChart(scoreHistoryData);
+                    } else {
+                        displayEmptyChartMessage();
+                    }
+                } catch (e) {
+                    console.error("Erreur lors de l'analyse des données du graphique :", e);
                     displayEmptyChartMessage();
                 }
-            } catch (e) {
-                console.error("Erreur lors de l'analyse des données du graphique :", e);
-                displayEmptyChartMessage();
-            }
-        });
+            });
 
-        function initializeScoreChart(scoreHistory) {
-            const ctx = document.getElementById('scoreChart').getContext('2d');
-            
-            // Détruire l'instance de graphique existante si elle existe
-            if (window.scoreChartInstance) {
-                window.scoreChartInstance.destroy();
-            }
-            
-            window.scoreChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: scoreHistory.map(item => new Date(item.date).toLocaleDateString('fr-FR')),
-                    datasets: [{
-                        label: 'Score (%)',
-                        data: scoreHistory.map(item => item.score),
-                        borderColor: 'var(--current-primary)',
-                        backgroundColor: 'var(--current-primary-container)',
-                        tension: 0.1,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
+            function initializeScoreChart(scoreHistory) {
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                
+                if (scoreChartInstance) {
+                    scoreChartInstance.destroy();
+                }
+                
+                scoreChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: scoreHistory.map(item => new Date(item.date).toLocaleDateString('fr-FR')),
+                        datasets: [{
+                            label: 'Score (%)',
+                            data: scoreHistory.map(item => item.score),
+                            borderColor: 'var(--current-primary)',
+                            backgroundColor: 'var(--current-primary-container)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
                                 }
                             }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
                         }
                     }
-                }
-            });
-        }
-
-        function displayEmptyChartMessage() {
-            const canvas = document.getElementById('scoreChart');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = "16px 'Roboto', sans-serif";
-                ctx.fillStyle = "var(--on-surface-variant)";
-                ctx.textAlign = "center";
-                ctx.fillText("Pas de données de score pour le moment.", canvas.width / 2, canvas.height / 2);
+                });
             }
-        }
+
+            function displayEmptyChartMessage() {
+                const canvas = document.getElementById('scoreChart');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.font = "16px 'Roboto', sans-serif";
+                    ctx.fillStyle = "var(--on-surface-variant)";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Pas de données de score pour le moment.", canvas.width / 2, canvas.height / 2);
+                }
+            }
+        })();
     </script>
 </body>
 </html>
