@@ -156,20 +156,7 @@ function displayBotMarkdown(markdownText) {
   icon.textContent = "smart_toy";
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
-  
-  // Traiter les blocs de code exécutables avant le parsing markdown
-  let processedMarkdown = markdownText;
-  if (window.processExecutableCode) {
-    processedMarkdown = window.processExecutableCode(markdownText);
-  }
-  
-  textSpan.innerHTML = window.marked.parse(processedMarkdown);
-  
-  // Post-traitement pour les blocs de code exécutables
-  setTimeout(() => {
-    processCodeBlocksInMessage(textSpan);
-  }, 100);
-  
+  textSpan.innerHTML = window.marked.parse(markdownText);
   messageDiv.appendChild(textSpan);
 
   var ttsBtn = document.createElement("button");
@@ -473,6 +460,13 @@ function initializeDragAndDrop() {
         
         const overlayContent = document.createElement('div');
         overlayContent.className = 'drag-drop-overlay-content';
+        
+        const icon = document.createElement('span');
+        icon.className = 'material-icons';
+        icon.textContent = 'upload_file';
+        
+        const text = document.createElement('p');
+        text.textContent = 'Déposez les fichiers ici';
         
         overlayContent.appendChild(icon);
         overlayContent.appendChild(text);
@@ -1121,12 +1115,6 @@ function loadDashboardContent() {
 function displayDashboardContent(data) {
   const content = document.getElementById('dashboardContent');
   
-  // Accéder aux données de manière sécurisée
-  const stats = data.stats && data.stats.overall_stats ? data.stats.overall_stats : {};
-  const activities = data.activities || [];
-  const recommendations = data.recommendations || [];
-  const scoreHistory = data.score_history || [];
-
   content.innerHTML = `
     <div class="dashboard-overview">
       <div class="dashboard-stats-grid">
@@ -1135,7 +1123,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">quiz</span>
           </div>
           <div class="stat-content">
-            <h3>${stats.total_qcms || 0}</h3>
+            <h3>${data.total_qcm || 0}</h3>
             <p>QCM Complétés</p>
           </div>
         </div>
@@ -1145,7 +1133,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">school</span>
           </div>
           <div class="stat-content">
-            <h3>${(stats.success_rate || 0).toFixed(1)}%</h3>
+            <h3>${data.average_score || 0}%</h3>
             <p>Score Moyen</p>
           </div>
         </div>
@@ -1155,7 +1143,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">chat</span>
           </div>
           <div class="stat-content">
-            <h3>${stats.total_messages || 0}</h3>
+            <h3>${data.total_messages || 0}</h3>
             <p>Messages Échangés</p>
           </div>
         </div>
@@ -1165,7 +1153,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">description</span>
           </div>
           <div class="stat-content">
-            <h3>${stats.total_files || 0}</h3>
+            <h3>${data.total_files || 0}</h3>
             <p>Fichiers Ingérés</p>
           </div>
         </div>
@@ -1174,13 +1162,13 @@ function displayDashboardContent(data) {
       <div class="dashboard-charts">
         <div class="chart-container">
           <h3>Progression des Scores</h3>
-          <canvas id="scoreChartModal" width="400" height="200"></canvas>
+          <canvas id="scoreChart" width="400" height="200"></canvas>
         </div>
         
         <div class="chart-container">
           <h3>Activité Récente</h3>
           <div class="activity-list">
-            ${activities.length > 0 ? activities.map(activity => `
+            ${data.recent_activities ? data.recent_activities.map(activity => `
               <div class="activity-item">
                 <span class="material-icons">${getActivityIcon(activity.type)}</span>
                 <div class="activity-content">
@@ -1196,9 +1184,9 @@ function displayDashboardContent(data) {
       <div class="dashboard-recommendations">
         <h3>Recommandations</h3>
         <div class="recommendations-list">
-          ${recommendations.length > 0 ? recommendations.map(rec => `
+          ${data.recommendations ? data.recommendations.map(rec => `
             <div class="recommendation-item">
-              <span class="material-icons">${rec.icon || 'lightbulb'}</span>
+              <span class="material-icons">${rec.icon}</span>
               <div class="recommendation-content">
                 <h4>${rec.title}</h4>
                 <p>${rec.description}</p>
@@ -1210,24 +1198,19 @@ function displayDashboardContent(data) {
     </div>
   `;
   
-  // Initialiser le graphique si Chart.js est disponible
-  if (typeof Chart !== 'undefined' && scoreHistory.length > 0) {
-    initializeScoreChart(scoreHistory, 'scoreChartModal');
+  // Initialiser les graphiques si Chart.js est disponible
+  if (typeof Chart !== 'undefined' && data.score_history) {
+    initializeScoreChart(data.score_history);
   }
 }
 
 function getActivityIcon(type) {
   switch(type) {
-    case 'qcm':
-      return 'quiz';
-    case 'chat':
-      return 'chat';
-    case 'upload':
-      return 'upload_file';
-    case 'revision':
-      return 'school';
-    default:
-      return 'info';
+    case 'qcm': return 'quiz';
+    case 'chat': return 'chat';
+    case 'upload': return 'upload_file';
+    case 'revision': return 'school';
+    default: return 'info';
   }
 }
 
@@ -1242,18 +1225,9 @@ function formatDate(dateString) {
   });
 }
 
-// Instance de graphique spécifique à la modale pour éviter les conflits
-let dashboardChartInstance;
-
-function initializeScoreChart(scoreHistory, canvasId) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  
-  // Détruire l'ancienne instance de graphique si elle existe
-  if (dashboardChartInstance) {
-      dashboardChartInstance.destroy();
-  }
-
-  dashboardChartInstance = new Chart(ctx, {
+function initializeScoreChart(scoreHistory) {
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  new Chart(ctx, {
     type: 'line',
     data: {
       labels: scoreHistory.map(item => formatDate(item.date)),
@@ -1262,25 +1236,15 @@ function initializeScoreChart(scoreHistory, canvasId) {
         data: scoreHistory.map(item => item.score),
         borderColor: 'var(--current-primary)',
         backgroundColor: 'var(--current-primary-container)',
-        tension: 0.1,
-        fill: true
+        tension: 0.1
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
       scales: {
         y: {
           beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: function(value) { return value + '%' }
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: false
+          max: 100
         }
       }
     }
@@ -1294,122 +1258,3 @@ document.addEventListener('click', function(event) {
     closeDashboardModal();
   }
 });
-
-// ===================== CODE PROCESSING =====================
-function processCodeBlocksInMessage(messageElement) {
-  // Chercher les blocs de code Python normaux et les rendre exécutables
-  const codeBlocks = messageElement.querySelectorAll('pre code.language-python');
-  
-  codeBlocks.forEach(codeElement => {
-    const code = codeElement.textContent;
-    if (code.trim() && window.codeSandbox) {
-      const executableBlock = window.codeSandbox.createExecutableCodeBlock(code, 'python');
-      codeElement.closest('pre').replaceWith(executableBlock);
-    }
-  });
-  
-  // Traiter également les blocs marqués spécifiquement comme exécutables
-  const executableBlocks = messageElement.querySelectorAll('.code-block-container');
-  executableBlocks.forEach(block => {
-    // Déjà traités par processExecutableCode
-  });
-}
-
-// ===================== ENHANCED TECHNICAL FEATURES =====================
-function createMathRenderer() {
-  // Si MathJax est disponible, l'utiliser pour rendre les formules
-  if (window.MathJax) {
-    return (text) => {
-      return text.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
-        return `<div class="math-display">$$${formula}$$</div>`;
-      }).replace(/\$(.*?)\$/g, (match, formula) => {
-        return `<span class="math-inline">$${formula}$</span>`;
-      });
-    };
-  }
-  return (text) => text;
-}
-
-function createAlgorithmVisualization(steps) {
-  const container = document.createElement('div');
-  container.className = 'algorithm-visualization';
-  
-  const title = document.createElement('h3');
-  title.innerHTML = `
-    <span class="material-icons">account_tree</span>
-    Visualisation de l'algorithme
-  `;
-  container.appendChild(title);
-  
-  steps.forEach((step, index) => {
-    const stepDiv = document.createElement('div');
-    stepDiv.className = 'algorithm-step';
-    stepDiv.innerHTML = `
-      <div class="step-number">${index + 1}</div>
-      <div class="step-content">
-        <h4>${step.title}</h4>
-        <p>${step.description}</p>
-        ${step.code ? `<pre><code>${step.code}</code></pre>` : ''}
-      </div>
-    `;
-    container.appendChild(stepDiv);
-  });
-  
-  return container;
-}
-
-// ===================== INTERACTIVE DEMONSTRATIONS =====================
-function createInteractiveSort() {
-  if (!window.interactiveDemo) return null;
-  
-  return window.interactiveDemo.createAlgorithmDemo(
-    'Tri à bulles interactif',
-    'Entrez des nombres séparés par des virgules pour voir le tri en action',
-    (values) => {
-      const numbers = values.input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
-      if (numbers.length === 0) throw new Error('Veuillez entrer des nombres valides');
-      
-      const steps = [];
-      const arr = [...numbers];
-      
-      for (let i = 0; i < arr.length - 1; i++) {
-        for (let j = 0; j < arr.length - i - 1; j++) {
-          if (arr[j] > arr[j + 1]) {
-            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-            steps.push(`Échange ${arr[j + 1]} et ${arr[j]}: [${arr.join(', ')}]`);
-          }
-        }
-      }
-      
-      return `Tableau trié: [${arr.join(', ')}]\n\nÉtapes:\n${steps.join('\n')}`;
-    },
-    [{ name: 'input', placeholder: 'Ex: 64, 34, 25, 12, 22, 11, 90', default: '64, 34, 25, 12, 22' }]
-  );
-}
-
-function createInteractiveFactorial() {
-  if (!window.interactiveDemo) return null;
-  
-  return window.interactiveDemo.createAlgorithmDemo(
-    'Calcul de factorielle',
-    'Entrez un nombre pour calculer sa factorielle',
-    (values) => {
-      const n = parseInt(values.number);
-      if (isNaN(n) || n < 0) throw new Error('Veuillez entrer un nombre entier positif');
-      if (n > 20) throw new Error('Nombre trop grand (max 20)');
-      
-      let result = 1;
-      let steps = [`${n}! = `];
-      
-      for (let i = n; i >= 1; i--) {
-        result *= i;
-        steps.push(i === n ? `${i}` : ` × ${i}`);
-      }
-      
-      return `${steps.join('')} = ${result}`;
-    },
-    [{ name: 'number', type: 'number', placeholder: 'Nombre', default: '5' }]
-  );
-}
-
-// ===================== ENHANCED REPLY CONTEXT =====================

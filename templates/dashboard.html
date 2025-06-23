@@ -18,17 +18,15 @@
 
 <body class="dashboard-page">
     <!-- Navigation Header -->
-    <header class="dashboard-header">
-        <div class="header-content">
+    <header class="dashboard-header">        <div class="header-content">
             <div class="header-title">
                 <span class="material-icons">dashboard</span>
                 <h1>Dashboard - Suivi de progression</h1>
             </div>
             <div class="header-actions">
-                <a href="{{ url_for('exam.exam_page') }}" class="back-btn" style="margin-right: 10px;">
-                    <span class="material-icons">assignment</span>
-                    Examens
-                </a>
+                <button id="themeToggle" class="theme-toggle-btn" title="Changer de thème">
+                    <span class="material-icons" id="themeIcon">dark_mode</span>
+                </button>
                 <a href="/" class="back-btn">
                     <span class="material-icons">arrow_back</span>
                     Retour au Chat
@@ -40,14 +38,14 @@
     <!-- Main Dashboard Content -->
     <main class="dashboard-main">
         <div class="dashboard-overview">
-        <!-- Stats Grid -->
+            <!-- Stats Grid -->
             <section class="dashboard-stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">
                         <span class="material-icons">quiz</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalQcms">{{ stats.overall_stats.total_qcms or 0 }}</h3>
+                        <h3 id="totalQcm">{{ stats.total_qcm or 0 }}</h3>
                         <p>QCM Complétés</p>
                     </div>
                 </div>
@@ -57,7 +55,7 @@
                         <span class="material-icons">school</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="averageScore">{{ "%.1f"|format(stats.overall_stats.success_rate or 0) }}%</h3>
+                        <h3 id="averageScore">{{ "%.1f"|format(stats.average_score or 0) }}%</h3>
                         <p>Score Moyen</p>
                     </div>
                 </div>
@@ -67,7 +65,7 @@
                         <span class="material-icons">chat</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalMessages">{{ stats.overall_stats.total_messages or 0 }}</h3>
+                        <h3 id="totalMessages">{{ stats.total_messages or 0 }}</h3>
                         <p>Messages Échangés</p>
                     </div>
                 </div>
@@ -77,7 +75,7 @@
                         <span class="material-icons">description</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalFiles">{{ stats.overall_stats.total_files or 0 }}</h3>
+                        <h3 id="totalFiles">{{ stats.total_files or 0 }}</h3>
                         <p>Fichiers Ingérés</p>
                     </div>
                 </div>
@@ -150,85 +148,91 @@
         </div>
     </main>
 
-    <!-- Data Island -->
-    <div id="score-history-data" data-scores='{{ score_history | tojson | safe }}' style="display: none;"></div>
-
     <!-- JavaScript -->
     <script>
-        (function() {
-            let scoreChartInstance;
+        // Initialisation du dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
 
-            document.addEventListener('DOMContentLoaded', function() {
-                const dataElement = document.getElementById('score-history-data');
-                try {
-                    const scoreHistoryData = JSON.parse(dataElement.dataset.scores);
+        function initializeDashboard() {
+            // Initialiser les graphiques
+            {% if score_history %}
+            initializeScoreChart({{ score_history | tojson }});
+            {% endif %}
+            
+            // Mettre à jour les données en temps réel
+            refreshDashboardData();
+        }
 
-                    if (scoreHistoryData && scoreHistoryData.length > 0) {
-                        initializeScoreChart(scoreHistoryData);
-                    } else {
-                        displayEmptyChartMessage();
-                    }
-                } catch (e) {
-                    console.error("Erreur lors de l'analyse des données du graphique :", e);
-                    displayEmptyChartMessage();
-                }
-            });
-
-            function initializeScoreChart(scoreHistory) {
-                const ctx = document.getElementById('scoreChart').getContext('2d');
-                
-                if (scoreChartInstance) {
-                    scoreChartInstance.destroy();
-                }
-                
-                scoreChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: scoreHistory.map(item => new Date(item.date).toLocaleDateString('fr-FR')),
-                        datasets: [{
-                            label: 'Score (%)',
-                            data: scoreHistory.map(item => item.score),
-                            borderColor: 'var(--current-primary)',
-                            backgroundColor: 'var(--current-primary-container)',
-                            tension: 0.1,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value + '%';
-                                    }
+        function initializeScoreChart(scoreHistory) {
+            if (!scoreHistory || scoreHistory.length === 0) return;
+            
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: scoreHistory.map(item => new Date(item.date).toLocaleDateString('fr-FR')),
+                    datasets: [{
+                        label: 'Score (%)',
+                        data: scoreHistory.map(item => item.score),
+                        borderColor: 'var(--current-primary)',
+                        backgroundColor: 'var(--current-primary-container)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
                                 }
                             }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     }
-                });
-            }
-
-            function displayEmptyChartMessage() {
-                const canvas = document.getElementById('scoreChart');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.font = "16px 'Roboto', sans-serif";
-                    ctx.fillStyle = "var(--on-surface-variant)";
-                    ctx.textAlign = "center";
-                    ctx.fillText("Pas de données de score pour le moment.", canvas.width / 2, canvas.height / 2);
                 }
+            });
+        }
+
+        function refreshDashboardData() {
+            // Optionnel : actualiser les données depuis l'API
+            fetch('/dashboard/data')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        updateDashboardStats(result.data);
+                    }
+                })
+                .catch(error => {
+                    console.log('Pas de mise à jour en temps réel disponible');
+                });
+        }
+
+        function updateDashboardStats(data) {
+            // Mettre à jour les statistiques si nécessaire
+            if (data.total_qcm !== undefined) {
+                document.getElementById('totalQcm').textContent = data.total_qcm;
             }
-        })();
-    </script>
+            if (data.average_score !== undefined) {
+                document.getElementById('averageScore').textContent = data.average_score.toFixed(1) + '%';
+            }
+            if (data.total_messages !== undefined) {
+                document.getElementById('totalMessages').textContent = data.total_messages;
+            }
+            if (data.total_files !== undefined) {
+                document.getElementById('totalFiles').textContent = data.total_files;
+            }
+        }    </script>
 </body>
 </html>
