@@ -156,7 +156,20 @@ function displayBotMarkdown(markdownText) {
   icon.textContent = "smart_toy";
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
-  textSpan.innerHTML = window.marked.parse(markdownText);
+  
+  // Traiter les blocs de code exécutables avant le parsing markdown
+  let processedMarkdown = markdownText;
+  if (window.processExecutableCode) {
+    processedMarkdown = window.processExecutableCode(markdownText);
+  }
+  
+  textSpan.innerHTML = window.marked.parse(processedMarkdown);
+  
+  // Post-traitement pour les blocs de code exécutables
+  setTimeout(() => {
+    processCodeBlocksInMessage(textSpan);
+  }, 100);
+  
   messageDiv.appendChild(textSpan);
 
   var ttsBtn = document.createElement("button");
@@ -460,13 +473,6 @@ function initializeDragAndDrop() {
         
         const overlayContent = document.createElement('div');
         overlayContent.className = 'drag-drop-overlay-content';
-        
-        const icon = document.createElement('span');
-        icon.className = 'material-icons';
-        icon.textContent = 'upload_file';
-        
-        const text = document.createElement('p');
-        text.textContent = 'Déposez les fichiers ici';
         
         overlayContent.appendChild(icon);
         overlayContent.appendChild(text);
@@ -1288,3 +1294,122 @@ document.addEventListener('click', function(event) {
     closeDashboardModal();
   }
 });
+
+// ===================== CODE PROCESSING =====================
+function processCodeBlocksInMessage(messageElement) {
+  // Chercher les blocs de code Python normaux et les rendre exécutables
+  const codeBlocks = messageElement.querySelectorAll('pre code.language-python');
+  
+  codeBlocks.forEach(codeElement => {
+    const code = codeElement.textContent;
+    if (code.trim() && window.codeSandbox) {
+      const executableBlock = window.codeSandbox.createExecutableCodeBlock(code, 'python');
+      codeElement.closest('pre').replaceWith(executableBlock);
+    }
+  });
+  
+  // Traiter également les blocs marqués spécifiquement comme exécutables
+  const executableBlocks = messageElement.querySelectorAll('.code-block-container');
+  executableBlocks.forEach(block => {
+    // Déjà traités par processExecutableCode
+  });
+}
+
+// ===================== ENHANCED TECHNICAL FEATURES =====================
+function createMathRenderer() {
+  // Si MathJax est disponible, l'utiliser pour rendre les formules
+  if (window.MathJax) {
+    return (text) => {
+      return text.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
+        return `<div class="math-display">$$${formula}$$</div>`;
+      }).replace(/\$(.*?)\$/g, (match, formula) => {
+        return `<span class="math-inline">$${formula}$</span>`;
+      });
+    };
+  }
+  return (text) => text;
+}
+
+function createAlgorithmVisualization(steps) {
+  const container = document.createElement('div');
+  container.className = 'algorithm-visualization';
+  
+  const title = document.createElement('h3');
+  title.innerHTML = `
+    <span class="material-icons">account_tree</span>
+    Visualisation de l'algorithme
+  `;
+  container.appendChild(title);
+  
+  steps.forEach((step, index) => {
+    const stepDiv = document.createElement('div');
+    stepDiv.className = 'algorithm-step';
+    stepDiv.innerHTML = `
+      <div class="step-number">${index + 1}</div>
+      <div class="step-content">
+        <h4>${step.title}</h4>
+        <p>${step.description}</p>
+        ${step.code ? `<pre><code>${step.code}</code></pre>` : ''}
+      </div>
+    `;
+    container.appendChild(stepDiv);
+  });
+  
+  return container;
+}
+
+// ===================== INTERACTIVE DEMONSTRATIONS =====================
+function createInteractiveSort() {
+  if (!window.interactiveDemo) return null;
+  
+  return window.interactiveDemo.createAlgorithmDemo(
+    'Tri à bulles interactif',
+    'Entrez des nombres séparés par des virgules pour voir le tri en action',
+    (values) => {
+      const numbers = values.input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+      if (numbers.length === 0) throw new Error('Veuillez entrer des nombres valides');
+      
+      const steps = [];
+      const arr = [...numbers];
+      
+      for (let i = 0; i < arr.length - 1; i++) {
+        for (let j = 0; j < arr.length - i - 1; j++) {
+          if (arr[j] > arr[j + 1]) {
+            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+            steps.push(`Échange ${arr[j + 1]} et ${arr[j]}: [${arr.join(', ')}]`);
+          }
+        }
+      }
+      
+      return `Tableau trié: [${arr.join(', ')}]\n\nÉtapes:\n${steps.join('\n')}`;
+    },
+    [{ name: 'input', placeholder: 'Ex: 64, 34, 25, 12, 22, 11, 90', default: '64, 34, 25, 12, 22' }]
+  );
+}
+
+function createInteractiveFactorial() {
+  if (!window.interactiveDemo) return null;
+  
+  return window.interactiveDemo.createAlgorithmDemo(
+    'Calcul de factorielle',
+    'Entrez un nombre pour calculer sa factorielle',
+    (values) => {
+      const n = parseInt(values.number);
+      if (isNaN(n) || n < 0) throw new Error('Veuillez entrer un nombre entier positif');
+      if (n > 20) throw new Error('Nombre trop grand (max 20)');
+      
+      let result = 1;
+      let steps = [`${n}! = `];
+      
+      for (let i = n; i >= 1; i--) {
+        result *= i;
+        steps.push(i === n ? `${i}` : ` × ${i}`);
+      }
+      
+      return `${steps.join('')} = ${result}`;
+    },
+    [{ name: 'number', type: 'number', placeholder: 'Nombre', default: '5' }]
+  );
+}
+
+// ===================== ENHANCED REPLY CONTEXT =====================

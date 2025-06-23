@@ -8,7 +8,6 @@ from typing import Optional
 
 from config import config
 from models import document_store
-from services.external_resource_service import ExternalResourceService
 
 class LLMService:
     """Service pour les interactions avec le LLM Mistral"""
@@ -19,38 +18,94 @@ class LLMService:
             temperature=config.MISTRAL_TEMPERATURE,
             api_key=config.MISTRAL_API_KEY
         )
-        # Initialize external resource service
-        self.external_service = ExternalResourceService()
     
     def get_chatbot_response(self, user_message: str) -> str:
-        """Générer une réponse de chatbot contextuelle avec ressources externes"""
+        """Générer une réponse de chatbot contextuelle avec explications techniques détaillées"""
         context = document_store.get_recent_content(limit=3)
         
+        # Détecter si c'est une question technique nécessitant des exemples de code
+        is_technical = self._is_technical_question(user_message)
+        
+        if is_technical:
+            return self._get_technical_response(user_message, context)
+        else:
+            return self._get_standard_response(user_message, context)
+    
+    def _is_technical_question(self, message: str) -> bool:
+        """Détecter si la question nécessite des explications techniques avec code"""
+        technical_keywords = [
+            'algorithme', 'code', 'python', 'javascript', 'programmation', 'fonction',
+            'variable', 'boucle', 'condition', 'classe', 'méthode', 'syntaxe',
+            'exemple', 'démonstration', 'étape', 'comment faire', 'implémenter',
+            'calculer', 'résoudre', 'formule', 'équation', 'mathématiques',
+            'structure de données', 'tri', 'recherche', 'récursion'        ]
+        message_lower = message.lower()
+        return any(keyword in message_lower for keyword in technical_keywords)
+    
+    def _get_technical_response(self, user_message: str, context: str) -> str:
+        """Générer une réponse technique détaillée avec exemples de code"""
+        
+        # Importer ici pour éviter les imports circulaires
+        try:
+            from services.technical_explanation_service import technical_explanation_service
+            
+            # Utiliser le service spécialisé pour les explications techniques
+            explanation_result = technical_explanation_service.generate_step_by_step_explanation(
+                user_message, context
+            )
+            
+            if explanation_result["success"]:
+                return explanation_result["explanation"]
+            else:
+                # Fallback vers le prompt standard amélioré
+                return self._get_enhanced_technical_fallback(user_message, context)
+                
+        except ImportError:
+            # Fallback si le service n'est pas disponible
+            return self._get_enhanced_technical_fallback(user_message, context)
+    
+    def _get_enhanced_technical_fallback(self, user_message: str, context: str) -> str:
+        """Fallback amélioré pour les réponses techniques"""
         prompt = ChatPromptTemplate.from_messages([
             ("system", 
-             "Tu es un assistant pédagogique. Utilise le contexte fourni pour répondre à la question de l'utilisateur. Contexte : {context}"),
+             """Tu es un assistant pédagogique expert en programmation et mathématiques. 
+             Quand tu expliques des concepts techniques, suis cette structure :
+
+             1. **Explication conceptuelle** : Explique le concept de manière claire
+             2. **Étapes détaillées** : Décompose le processus étape par étape
+             3. **Exemple concret** : Fournis un exemple pratique avec code
+             4. **Code exécutable** : Inclus du code Python simple et commenté
+             5. **Variantes/Extensions** : Montre des variantes ou cas d'usage
+
+             IMPORTANT : Pour le code Python, utilise ce format spécial :
+             ```python-executable
+             # Ton code Python ici
+             # Il sera exécutable dans le navigateur
+             ```
+
+             Utilise le contexte fourni si pertinent. Contexte : {context}"""),
             ("user", "{question}")
         ])
         
         chain = prompt | self.llm | StrOutputParser()
         
         try:
-            # Generate the main response
-            main_response = chain.invoke({"context": context, "question": user_message})
-            
-            # Get external resources
-            external_resources = self.external_service.get_external_resources(user_message, main_response)
-            
-            # Format external resources as HTML
-            resources_html = self.external_service.format_external_resources_html(external_resources)
-            
-            # Combine main response with external resources
-            full_response = main_response
-            if resources_html:
-                full_response += "\n\n" + resources_html
-            
-            return full_response
-            
+            return chain.invoke({"context": context, "question": user_message})
+        except Exception as e:
+            return f"Erreur lors de l'appel au LLM : {e}"
+    
+    def _get_standard_response(self, user_message: str, context: str) -> str:
+        """Générer une réponse standard"""
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", 
+             "Tu es un assistant pédagogique bienveillant. Utilise le contexte fourni pour répondre à la question de l'utilisateur de manière claire et structurée. Contexte : {context}"),
+            ("user", "{question}")
+        ])
+        
+        chain = prompt | self.llm | StrOutputParser()
+        
+        try:
+            return chain.invoke({"context": context, "question": user_message})
         except Exception as e:
             return f"Erreur lors de l'appel au LLM : {e}"
     
