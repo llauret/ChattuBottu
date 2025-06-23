@@ -1516,234 +1516,54 @@ a:hover {
   padding: var(--md-shape-corner-lg);
 }
 
-.loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  color: var(--current-on-surface-variant);
+/* Styles pour les graphiques dans le modal */
+.dashboard-modal .dashboard-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.loading-spinner .material-icons {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: rotate 1s linear infinite;
+.dashboard-modal .chart-container {
+  background: var(--current-surface-container-low);
+  border-radius: var(--md-shape-corner-md);
+  padding: 1.5rem;
+  border: 1px solid var(--current-outline);
+  max-height: 350px;
+  overflow: hidden;
 }
 
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.dashboard-modal .chart-container canvas {
+  max-width: 100% !important;
+  max-height: 250px !important;
+  height: 250px !important;
+  width: 100% !important;
 }
 
-.rotating {
-  animation: rotate 1s linear infinite;
+.dashboard-modal #scoreChart {
+  max-width: 100% !important;
+  max-height: 250px !important;
+  height: 250px !important;
+  width: 100% !important;
 }
 
-/* Responsive navbar */
 @media (max-width: 768px) {
-  .navbar-btn span:not(.material-icons) {
-    display: none;
+  .dashboard-modal .dashboard-charts {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
-  .navbar-brand h1 {
-    font-size: 1.25rem;
+  .dashboard-modal .chart-container {
+    max-height: 300px;
   }
   
-  .dashboard-modal-content {
-    width: 95%;
-    max-height: 90vh;
+  .dashboard-modal .chart-container canvas {
+    max-height: 200px !important;
+    height: 200px !important;
   }
   
-  .dashboard-modal-header {
-    padding: var(--md-shape-corner-md);
-  }
-  
-  .dashboard-modal-title {
-    font-size: 1.25rem;
-  }
-}
-
-/* ===================== DARK THEME QCM STYLES ===================== */
-
-[data-theme="dark"] .qcm-modal {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="dark"] .qcm-results-modal {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="dark"] .qcm-detail-item.correct {
-  background: color-mix(in srgb, #4caf50 15%, var(--current-surface-container-low));
-}
-
-[data-theme="dark"] .qcm-detail-item.incorrect {
-  background: color-mix(in srgb, #f44336 15%, var(--current-surface-container-low));
-}
-
-/* ===================== QCM RESULTS STYLES ===================== */
-
-.qcm-score {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-
-.qcm-score-circle {
-  width: 120px;
-  height: 120px;
-  border: 6px solid var(--current-outline);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--current-surface-container-low);
-}
-
-.qcm-score-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.qcm-score-percent {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.qcm-details {
-  margin-top: 24px;
-}
-
-.qcm-details h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--current-on-surface);
-  margin: 0 0 16px 0;
-}
-
-.qcm-detail-item {
-  margin-bottom: 20px;
-  padding: 16px;
-  border-radius: var(--md-shape-corner-sm);
-  border-left: 4px solid var(--current-outline);
-}
-
-.qcm-detail-item.correct {
-  background: var(--current-surface-container-low);
-  border-left-color: #4caf50;
-}
-
-.qcm-detail-item.incorrect {
-  background: var(--current-surface-container-low);
-  border-left-color: #f44336;
-}
-
-.qcm-detail-question {
-  font-weight: 500;
-  color: var(--current-on-surface);
-  margin-bottom: 12px;
-  line-height: 1.4;
-}
-
-.qcm-detail-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.qcm-detail-answer {
-  font-size: 0.875rem;
-  line-height: 1.4;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qcm-detail-answer.user-answer {
-  color: var(--current-on-surface-variant);
-}
-
-.qcm-detail-answer.correct-answer {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.qcm-detail-answer .material-icons {
-  font-size: 18px;
-}
-
-.qcm-detail-explanation {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--current-outline);
-  font-size: 0.875rem;
-  color: var(--current-on-surface-variant);
-  line-height: 1.4;
-}
-
-.qcm-results-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--current-outline);
-}
-
-.qcm-results-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: var(--md-shape-corner-sm);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qcm-results-btn.primary {
-  background: var(--current-primary);
-  color: var(--current-on-primary);
-}
-
-.qcm-results-btn.primary:hover {
-  background: color-mix(in srgb, var(--current-primary) 90%, white);
-}
-
-.qcm-results-btn.secondary {
-  background: var(--current-secondary);
-  color: var(--current-on-secondary);
-}
-
-.qcm-results-btn.secondary:hover {
-  background: color-mix(in srgb, var(--current-secondary) 90%, white);
-}
-
-/* Responsive QCM Results */
-@media (max-width: 768px) {
-  .qcm-score-circle {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .qcm-score-text {
-    font-size: 1.25rem;
-  }
-  
-  .qcm-score-percent {
-    font-size: 1rem;
-  }
-  
-  .qcm-results-actions {
-    flex-direction: column;
-  }
-  
-  .qcm-detail-item {
-    padding: 12px;
+  .dashboard-modal #scoreChart {
+    max-height: 200px !important;
+    height: 200px !important;
   }
 }

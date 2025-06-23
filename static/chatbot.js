@@ -1072,6 +1072,12 @@ function openDashboardModal() {
 }
 
 function closeDashboardModal() {
+  // Détruire l'instance du graphique si elle existe
+  if (scoreChartInstance) {
+    scoreChartInstance.destroy();
+    scoreChartInstance = null;
+  }
+  
   const modal = document.getElementById('dashboardModal');
   modal.style.display = 'none';
 }
@@ -1111,6 +1117,9 @@ function loadDashboardContent() {
       `;
     });
 }
+
+// Variable globale pour stocker l'instance du graphique
+let scoreChartInstance = null;
 
 function displayDashboardContent(data) {
   const content = document.getElementById('dashboardContent');
@@ -1200,7 +1209,10 @@ function displayDashboardContent(data) {
   
   // Initialiser les graphiques si Chart.js est disponible
   if (typeof Chart !== 'undefined' && data.score_history) {
-    initializeScoreChart(data.score_history);
+    // Attendre que le DOM soit mis à jour avant d'initialiser le graphique
+    setTimeout(() => {
+      initializeScoreChart(data.score_history);
+    }, 100);
   }
 }
 
@@ -1226,8 +1238,19 @@ function formatDate(dateString) {
 }
 
 function initializeScoreChart(scoreHistory) {
-  const ctx = document.getElementById('scoreChart').getContext('2d');
-  new Chart(ctx, {
+  // Détruire l'instance précédente si elle existe
+  if (scoreChartInstance) {
+    scoreChartInstance.destroy();
+    scoreChartInstance = null;
+  }
+  
+  const canvas = document.getElementById('scoreChart');
+  if (!canvas) {
+    console.warn('Canvas scoreChart non trouvé');
+    return;
+  }
+    const ctx = canvas.getContext('2d');
+  scoreChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: scoreHistory.map(item => formatDate(item.date)),
@@ -1241,10 +1264,18 @@ function initializeScoreChart(scoreHistory) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
       scales: {
         y: {
           beginAtZero: true,
           max: 100
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
         }
       }
     }
