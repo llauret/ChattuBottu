@@ -516,6 +516,7 @@
 
 .qcm-detail-answers {
   font-size: 0.875rem;
+  margin-top: 12px;
 }
 
 .qcm-detail-answer {
@@ -531,14 +532,35 @@
   font-weight: 500;
 }
 
-.qcm-detail-explanation {
-  margin-top: 12px;
-  padding: 12px;
-  background-color: var(--current-surface-container-low);
+/* Style pour les bonnes réponses dans les résultats */
+.qcm-detail-answer.correct-answer {
+  color: #2e7d32;
+  font-weight: 500;
+  background-color: rgba(46, 125, 50, 0.1);
+  padding: 8px 12px;
   border-radius: var(--md-shape-corner-sm);
+  margin-top: 8px;
+}
+
+/* Style pour les icônes dans les réponses */
+.qcm-detail-answer .material-icons {
+  vertical-align: middle;
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+/* Style pour les réponses incorrectes */
+.qcm-detail-answer.incorrect {
+  color: #d32f2f;
+  background-color: rgba(211, 47, 47, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--md-shape-corner-sm);
+}
+
+/* Amélioration du conteneur des réponses */
+.qcm-detail-answers {
   font-size: 0.875rem;
-  color: var(--current-on-surface-variant);
-  line-height: 1.4;
+  margin-top: 12px;
 }
 
 .qcm-results-actions {
