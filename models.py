@@ -99,7 +99,7 @@ class QCMResult:
     score: int = 0
     total_questions: int = 0
     percentage: float = 0.0
-    completion_time: Optional[float] = None  # Temps en secondes
+    completion_time: Optional[datetime] = None  # Temps de complétion
     completed_at: datetime = field(default_factory=datetime.now)
     details: List[dict] = field(default_factory=list)
     themes: List[str] = field(default_factory=list)  # Thèmes abordés

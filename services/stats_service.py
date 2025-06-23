@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from datetime import datetime, timedelta
 import time
 
-from models import progress_store, qcm_store
+from models import progress_store, qcm_store, QCMResult
 
 
 class StatsService:
@@ -28,24 +28,12 @@ class StatsService:
         """Enregistrer une activité"""
         progress_store.add_activity(activity, document)
     
-    def update_qcm_completion(self, result_data: Dict[str, Any]) -> None:
+    def update_qcm_completion(self, result: 'QCMResult') -> None:
         """Mettre à jour les statistiques après un QCM"""
         # Extraire les thèmes depuis le titre du QCM (simple extraction)
-        themes = self._extract_themes_from_title(result_data.get('qcm_title', ''))
+        themes = self._extract_themes_from_title(result.qcm_title)
         
-        # Créer un objet result enrichi
-        from models import QCMResult
-        result = QCMResult(
-            qcm_id=result_data['qcm_id'],
-            qcm_title=result_data.get('qcm_title', ''),
-            user_answers=result_data['user_answers'],
-            score=result_data['score'],
-            total_questions=result_data['total_questions'],
-            percentage=result_data.get('percentage', 0),
-            completion_time=result_data.get('completion_time'),
-            details=result_data.get('details', []),
-            themes=themes
-        )
+        result.themes = themes
         
         # Ajouter les thèmes aux détails des questions
         for detail in result.details:
@@ -230,6 +218,155 @@ class StatsService:
                 recommendations.append("Revoyez les explications des questions ratées pour améliorer vos performances")
         
         return recommendations[:3]  # Maximum 3 recommandations
+    
+    def get_score_history(self) -> List[Dict[str, Any]]:
+        """Récupérer l'historique des scores pour les graphiques"""
+        try:
+            # Récupérer les résultats des QCM
+            results = qcm_store.get_all_results()
+            
+            if not results:
+                return []
+            
+            # Grouper par date et calculer la moyenne quotidienne
+            daily_scores = {}
+            for result in results:
+                # Utiliser completed_at ou completion_time, puis date actuelle par défaut
+                date_obj = None
+                if hasattr(result, 'completion_time') and result.completion_time:
+                    date_obj = result.completion_time
+                elif hasattr(result, 'completed_at') and result.completed_at:
+                    date_obj = result.completed_at
+                else:
+                    date_obj = datetime.now()
+                
+                date_key = date_obj.strftime('%Y-%m-%d')
+                
+                if date_key not in daily_scores:
+                    daily_scores[date_key] = []
+                daily_scores[date_key].append(result.percentage)
+            
+            # Créer la liste finale avec moyennes
+            score_history = []
+            for date_str, scores in daily_scores.items():
+                average_score = sum(scores) / len(scores)
+                score_history.append({
+                    'date': date_str,
+                    'score': round(average_score, 1)
+                })
+            
+            # Trier par date
+            score_history.sort(key=lambda x: x['date'])            
+            return score_history[-30:]  # Derniers 30 jours maximum
+            
+        except Exception as e:
+            print(f"Erreur lors de la récupération de l'historique des scores : {e}")
+            return []
+    
+    def get_recent_activities(self) -> List[Dict[str, Any]]:
+        """Récupérer les activités récentes"""
+        try:
+            activities = []
+            
+            # Récupérer les QCM récents
+            results = qcm_store.get_all_results()
+            for result in results[-10:]:  # Derniers 10 QCM
+                # Utiliser completion_time ou completed_at
+                timestamp = getattr(result, 'completion_time', None) or getattr(result, 'completed_at', datetime.now())
+                
+                activities.append({
+                    'type': 'qcm',
+                    'description': f"QCM complété : {result.qcm_title or 'QCM'} - Score: {result.percentage}%",
+                    'timestamp': timestamp
+                })
+              # Récupérer les activités depuis le progress_store s'il y en a
+            try:
+                progress = progress_store.get_progress()
+                if hasattr(progress, 'recent_activities'):
+                    for activity in progress.recent_activities[-5:]:  # Dernières 5 activités
+                        activities.append({
+                            'type': activity.get('type', 'other'),
+                            'description': activity.get('description', 'Activité'),
+                            'timestamp': activity.get('timestamp', datetime.now())
+                        })
+            except:
+                pass
+              # Trier par timestamp (plus récent en premier)
+            activities.sort(key=lambda x: x['timestamp'], reverse=True)
+            return activities[:10]  # Maximum 10 activités
+            
+        except Exception as e:
+            print(f"Erreur lors de la récupération des activités : {e}")
+            return []
+    
+    def get_recommendations(self) -> List[Dict[str, Any]]:
+        """Récupérer les recommandations personnalisées"""
+        try:
+            recommendations = []
+            
+            # Récupérer les données de progression
+            progress = progress_store.get_progress()
+            results = qcm_store.get_all_results()
+            # Génération de recommandations basée sur les performances
+            if results:
+                recent_avg = sum(r.percentage for r in results[-5:]) / min(len(results), 5)
+                
+                if recent_avg < 60:
+                    recommendations.append({
+                        'title': 'Améliorer vos performances',
+                        'description': 'Vos scores récents sont en baisse. Prenez le temps de réviser les concepts de base.',
+                        'icon': 'school'
+                    })
+                elif recent_avg > 80:
+                    recommendations.append({
+                        'title': 'Excellent travail !',
+                        'description': 'Continuez sur cette lancée. Vous pourriez explorer des sujets plus avancés.',
+                        'icon': 'star'
+                    })
+                else:
+                    recommendations.append({
+                        'title': 'Progression constante',
+                        'description': 'Vous êtes sur la bonne voie. Un peu plus de pratique vous aidera à exceller.',
+                        'icon': 'trending_up'
+                    })
+            
+            # Recommandations basées sur les thèmes faibles
+            if hasattr(progress, 'weak_themes') and progress.weak_themes:
+                recommendations.append({
+                    'title': 'Renforcer les thèmes faibles',                    'description': f"Concentrez-vous sur : {', '.join(progress.weak_themes[:2])}",
+                    'icon': 'build'
+                })
+            # Recommandations de régularité
+            if len(results) > 0:
+                last_result = results[-1]
+                # Utiliser completion_time ou completed_at
+                last_completion = getattr(last_result, 'completion_time', None) or getattr(last_result, 'completed_at', None)
+                if last_completion:
+                    days_since_last = (datetime.now() - last_completion).days
+                    if days_since_last > 3:
+                        recommendations.append({
+                            'title': 'Maintenir la régularité',
+                            'description': 'Il y a quelques jours depuis votre dernière session. La régularité est clé pour progresser.',
+                            'icon': 'schedule'
+                        })
+            
+            # Si pas de recommandations spécifiques, ajouter une recommandation générale
+            if not recommendations:
+                recommendations.append({
+                    'title': 'Commencer votre apprentissage',
+                    'description': 'Commencez par télécharger un document et faire votre premier QCM pour obtenir des recommandations personnalisées.',
+                    'icon': 'play_arrow'
+                })
+            
+            return recommendations[:3]  # Maximum 3 recommandations
+            
+        except Exception as e:
+            print(f"Erreur lors de la génération des recommandations : {e}")
+            return [{
+                'title': 'Continuez votre apprentissage !',
+                'description': 'Utilisez l\'application davantage pour obtenir des recommandations personnalisées.',
+                'icon': 'lightbulb'
+            }]
 
 
 # Instance globale du service stats

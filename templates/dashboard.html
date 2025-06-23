@@ -8,16 +8,15 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/static/style.css" />
-    <link rel="stylesheet" href="/static/dashboard-only.css" />
+      <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/dashboard-only.css">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
+<body class="dashboard-page">
     <!-- Navigation Header -->
     <header class="dashboard-header">
         <div class="header-content">
@@ -35,14 +34,14 @@
     <!-- Main Dashboard Content -->
     <main class="dashboard-main">
         <div class="dashboard-overview">
-            <!-- Stats Grid -->
+        <!-- Stats Grid -->
             <section class="dashboard-stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">
                         <span class="material-icons">quiz</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalQcm">{{ stats.total_qcm or 0 }}</h3>
+                        <h3 id="totalQcms">{{ stats.overall_stats.total_qcms or 0 }}</h3>
                         <p>QCM Complétés</p>
                     </div>
                 </div>
@@ -52,7 +51,7 @@
                         <span class="material-icons">school</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="averageScore">{{ "%.1f"|format(stats.average_score or 0) }}%</h3>
+                        <h3 id="averageScore">{{ "%.1f"|format(stats.overall_stats.success_rate or 0) }}%</h3>
                         <p>Score Moyen</p>
                     </div>
                 </div>
@@ -62,7 +61,7 @@
                         <span class="material-icons">chat</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalMessages">{{ stats.total_messages or 0 }}</h3>
+                        <h3 id="totalMessages">{{ stats.overall_stats.total_messages or 0 }}</h3>
                         <p>Messages Échangés</p>
                     </div>
                 </div>
@@ -72,7 +71,7 @@
                         <span class="material-icons">description</span>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalFiles">{{ stats.total_files or 0 }}</h3>
+                        <h3 id="totalFiles">{{ stats.overall_stats.total_files or 0 }}</h3>
                         <p>Fichiers Ingérés</p>
                     </div>
                 </div>
@@ -145,28 +144,36 @@
         </div>
     </main>
 
+    <!-- Data Island -->
+    <div id="score-history-data" data-scores='{{ score_history | tojson | safe }}' style="display: none;"></div>
+
     <!-- JavaScript -->
     <script>
-        // Initialisation du dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            initializeDashboard();
+            const dataElement = document.getElementById('score-history-data');
+            try {
+                const scoreHistoryData = JSON.parse(dataElement.dataset.scores);
+
+                if (scoreHistoryData && scoreHistoryData.length > 0) {
+                    initializeScoreChart(scoreHistoryData);
+                } else {
+                    displayEmptyChartMessage();
+                }
+            } catch (e) {
+                console.error("Erreur lors de l'analyse des données du graphique :", e);
+                displayEmptyChartMessage();
+            }
         });
 
-        function initializeDashboard() {
-            // Initialiser les graphiques
-            {% if score_history %}
-            initializeScoreChart({{ score_history | tojson }});
-            {% endif %}
-            
-            // Mettre à jour les données en temps réel
-            refreshDashboardData();
-        }
-
         function initializeScoreChart(scoreHistory) {
-            if (!scoreHistory || scoreHistory.length === 0) return;
-            
             const ctx = document.getElementById('scoreChart').getContext('2d');
-            new Chart(ctx, {
+            
+            // Détruire l'instance de graphique existante si elle existe
+            if (window.scoreChartInstance) {
+                window.scoreChartInstance.destroy();
+            }
+            
+            window.scoreChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: scoreHistory.map(item => new Date(item.date).toLocaleDateString('fr-FR')),
@@ -202,114 +209,17 @@
             });
         }
 
-        function refreshDashboardData() {
-            // Optionnel : actualiser les données depuis l'API
-            fetch('/dashboard/data')
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        updateDashboardStats(result.data);
-                    }
-                })
-                .catch(error => {
-                    console.log('Pas de mise à jour en temps réel disponible');
-                });
-        }
-
-        function updateDashboardStats(data) {
-            // Mettre à jour les statistiques si nécessaire
-            if (data.total_qcm !== undefined) {
-                document.getElementById('totalQcm').textContent = data.total_qcm;
-            }
-            if (data.average_score !== undefined) {
-                document.getElementById('averageScore').textContent = data.average_score.toFixed(1) + '%';
-            }
-            if (data.total_messages !== undefined) {
-                document.getElementById('totalMessages').textContent = data.total_messages;
-            }
-            if (data.total_files !== undefined) {
-                document.getElementById('totalFiles').textContent = data.total_files;
+        function displayEmptyChartMessage() {
+            const canvas = document.getElementById('scoreChart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = "16px 'Roboto', sans-serif";
+                ctx.fillStyle = "var(--on-surface-variant)";
+                ctx.textAlign = "center";
+                ctx.fillText("Pas de données de score pour le moment.", canvas.width / 2, canvas.height / 2);
             }
         }
     </script>
-
-    <style>
-        /* Styles spécifiques à la page dashboard complète */
-        body {
-            margin: 0;
-            background: var(--current-background);
-            color: var(--current-on-background);
-        }
-        
-        .dashboard-header {
-            background: var(--current-surface-container-high);
-            border-bottom: 1px solid var(--current-outline);
-            padding: 1rem 2rem;
-            box-shadow: var(--current-elevation-1);
-        }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .header-title h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--current-on-surface);
-        }
-        
-        .header-title .material-icons {
-            font-size: 2rem;
-            color: var(--current-primary);
-        }
-        
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: var(--current-primary);
-            color: var(--current-on-primary);
-            text-decoration: none;
-            border-radius: var(--md-shape-corner-sm);
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-        
-        .back-btn:hover {
-            background: var(--current-primary-container);
-            color: var(--current-on-primary-container);
-            box-shadow: var(--current-elevation-2);
-        }
-        
-        .dashboard-main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
-            .dashboard-main {
-                padding: 1rem;
-            }
-        }
-    </style>
 </body>
 </html>

@@ -1060,6 +1060,7 @@ function startExistingQCM(qcmId) {
 // ===================== DASHBOARD MODAL FUNCTIONS =====================
 
 function openDashboardModal() {
+  console.log('Ouverture du dashboard modal');
   const modal = document.getElementById('dashboardModal');
   const content = document.getElementById('dashboardContent');
   
@@ -1089,6 +1090,7 @@ function loadDashboardContent() {
   fetch('/dashboard/data')
     .then(response => response.json())
     .then(result => {
+        console.log('Dashboard chargé avec succès', result)
       if (result.success) {
         displayDashboardContent(result.data);
       } else {
@@ -1113,6 +1115,12 @@ function loadDashboardContent() {
 function displayDashboardContent(data) {
   const content = document.getElementById('dashboardContent');
   
+  // Accéder aux données de manière sécurisée
+  const stats = data.stats && data.stats.overall_stats ? data.stats.overall_stats : {};
+  const activities = data.activities || [];
+  const recommendations = data.recommendations || [];
+  const scoreHistory = data.score_history || [];
+
   content.innerHTML = `
     <div class="dashboard-overview">
       <div class="dashboard-stats-grid">
@@ -1121,7 +1129,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">quiz</span>
           </div>
           <div class="stat-content">
-            <h3>${data.total_qcm || 0}</h3>
+            <h3>${stats.total_qcms || 0}</h3>
             <p>QCM Complétés</p>
           </div>
         </div>
@@ -1131,7 +1139,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">school</span>
           </div>
           <div class="stat-content">
-            <h3>${data.average_score || 0}%</h3>
+            <h3>${(stats.success_rate || 0).toFixed(1)}%</h3>
             <p>Score Moyen</p>
           </div>
         </div>
@@ -1141,7 +1149,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">chat</span>
           </div>
           <div class="stat-content">
-            <h3>${data.total_messages || 0}</h3>
+            <h3>${stats.total_messages || 0}</h3>
             <p>Messages Échangés</p>
           </div>
         </div>
@@ -1151,7 +1159,7 @@ function displayDashboardContent(data) {
             <span class="material-icons">description</span>
           </div>
           <div class="stat-content">
-            <h3>${data.total_files || 0}</h3>
+            <h3>${stats.total_files || 0}</h3>
             <p>Fichiers Ingérés</p>
           </div>
         </div>
@@ -1160,13 +1168,13 @@ function displayDashboardContent(data) {
       <div class="dashboard-charts">
         <div class="chart-container">
           <h3>Progression des Scores</h3>
-          <canvas id="scoreChart" width="400" height="200"></canvas>
+          <canvas id="scoreChartModal" width="400" height="200"></canvas>
         </div>
         
         <div class="chart-container">
           <h3>Activité Récente</h3>
           <div class="activity-list">
-            ${data.recent_activities ? data.recent_activities.map(activity => `
+            ${activities.length > 0 ? activities.map(activity => `
               <div class="activity-item">
                 <span class="material-icons">${getActivityIcon(activity.type)}</span>
                 <div class="activity-content">
@@ -1182,9 +1190,9 @@ function displayDashboardContent(data) {
       <div class="dashboard-recommendations">
         <h3>Recommandations</h3>
         <div class="recommendations-list">
-          ${data.recommendations ? data.recommendations.map(rec => `
+          ${recommendations.length > 0 ? recommendations.map(rec => `
             <div class="recommendation-item">
-              <span class="material-icons">${rec.icon}</span>
+              <span class="material-icons">${rec.icon || 'lightbulb'}</span>
               <div class="recommendation-content">
                 <h4>${rec.title}</h4>
                 <p>${rec.description}</p>
@@ -1196,19 +1204,24 @@ function displayDashboardContent(data) {
     </div>
   `;
   
-  // Initialiser les graphiques si Chart.js est disponible
-  if (typeof Chart !== 'undefined' && data.score_history) {
-    initializeScoreChart(data.score_history);
+  // Initialiser le graphique si Chart.js est disponible
+  if (typeof Chart !== 'undefined' && scoreHistory.length > 0) {
+    initializeScoreChart(scoreHistory, 'scoreChartModal');
   }
 }
 
 function getActivityIcon(type) {
   switch(type) {
-    case 'qcm': return 'quiz';
-    case 'chat': return 'chat';
-    case 'upload': return 'upload_file';
-    case 'revision': return 'school';
-    default: return 'info';
+    case 'qcm':
+      return 'quiz';
+    case 'chat':
+      return 'chat';
+    case 'upload':
+      return 'upload_file';
+    case 'revision':
+      return 'school';
+    default:
+      return 'info';
   }
 }
 
@@ -1223,9 +1236,18 @@ function formatDate(dateString) {
   });
 }
 
-function initializeScoreChart(scoreHistory) {
-  const ctx = document.getElementById('scoreChart').getContext('2d');
-  new Chart(ctx, {
+// Instance de graphique spécifique à la modale pour éviter les conflits
+let dashboardChartInstance;
+
+function initializeScoreChart(scoreHistory, canvasId) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  // Détruire l'ancienne instance de graphique si elle existe
+  if (dashboardChartInstance) {
+      dashboardChartInstance.destroy();
+  }
+
+  dashboardChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: scoreHistory.map(item => formatDate(item.date)),
@@ -1234,15 +1256,25 @@ function initializeScoreChart(scoreHistory) {
         data: scoreHistory.map(item => item.score),
         borderColor: 'var(--current-primary)',
         backgroundColor: 'var(--current-primary-container)',
-        tension: 0.1
+        tension: 0.1,
+        fill: true
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: {
           beginAtZero: true,
-          max: 100
+          max: 100,
+          ticks: {
+            callback: function(value) { return value + '%' }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
         }
       }
     }

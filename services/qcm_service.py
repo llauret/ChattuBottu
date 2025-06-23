@@ -9,6 +9,7 @@ from typing import List, Dict, Any
 
 from models import QCM, QCMQuestion, QCMResult, qcm_store, document_store, progress_store
 from services.llm_service import llm_service
+from services.stats_service import stats_service
 
 
 def clean_and_parse_json(response: str) -> dict:
@@ -321,8 +322,7 @@ JSON:"""
                 "is_correct": is_correct,
                 "options": question.options,
                 "explanation": question.explanation
-            })
-          # Créer et stocker le résultat
+            })        # Créer et stocker le résultat
         result = QCMResult(
             qcm_id=qcm_id,
             qcm_title=qcm.title,
@@ -334,9 +334,10 @@ JSON:"""
         )
         qcm_store.add_result(result)
         
-        # Mettre à jour les statistiques
-        progress_store.update_progress_with_result(result)
-        
+        # Mettre à jour les statistiques et la progression via le service dédié
+        stats_service.update_qcm_completion(result)
+
+        # Retourner les résultats détaillés
         return {
             "success": True,
             "result": {
