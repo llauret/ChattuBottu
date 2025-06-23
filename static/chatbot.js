@@ -156,8 +156,28 @@ function displayBotMarkdown(markdownText) {
   icon.textContent = "smart_toy";
   messageDiv.appendChild(icon);
   var textSpan = document.createElement("span");
-  textSpan.innerHTML = window.marked.parse(markdownText);
+  
+  // Traiter le code exécutable si le code sandbox est disponible
+  let processedMarkdown = markdownText;
+  if (window.processExecutableCode) {
+    processedMarkdown = window.processExecutableCode(markdownText);
+  }
+  
+  textSpan.innerHTML = window.marked.parse(processedMarkdown);
   messageDiv.appendChild(textSpan);
+
+  // Traiter les blocs de code Python après rendu Markdown
+  setTimeout(() => {
+    const codeBlocks = textSpan.querySelectorAll('pre code.language-python');
+    codeBlocks.forEach(codeBlock => {
+      const code = codeBlock.textContent;
+      if (code && window.codeSandbox) {
+        // Créer un conteneur pour le code exécutable
+        const executableBlock = window.codeSandbox.createExecutableCodeBlock(code, 'python');
+        codeBlock.parentNode.parentNode.replaceChild(executableBlock, codeBlock.parentNode);
+      }
+    });
+  }, 100);
 
   var ttsBtn = document.createElement("button");
   ttsBtn.className = "tts-btn ripple-effect-container";
