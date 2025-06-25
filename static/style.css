@@ -221,7 +221,7 @@ a:hover {
   padding: var(--md-shape-corner-lg); /* Consistent padding */
   gap: var(--md-shape-corner-lg);
   background-color: var(--current-background);
-  margin-top: 64px; /* Hauteur de la navbar */
+  /* margin-top: 64px; Hauteur de la navbar */
 }
 
 .chat-area {
@@ -1340,7 +1340,7 @@ a:hover {
 
 /* ===================== NAVIGATION BAR ===================== */
 .app-navbar {
-  position: fixed;
+  /* position: fixed; */
   top: 0;
   left: 0;
   right: 0;
@@ -1407,7 +1407,7 @@ a:hover {
 
 /* Ajustement du layout principal pour la navbar */
 .main-layout {
-  margin-top: 64px; /* Hauteur de la navbar */
+  /* margin-top: 64px; Hauteur de la navbar */
   display: flex;
   width: 100%;
   min-height: 100vh;

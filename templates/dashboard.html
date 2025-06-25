@@ -160,6 +160,15 @@
             
             // Mettre à jour les données en temps réel
             refreshDashboardData();
+
+            // Listen for the custom event from the main page (if in an iframe or handled via other means)
+            // A more robust way for separate pages is to use localStorage or BroadcastChannel
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'qcmCompleted') {
+                    console.log('QCM completion event detected via storage, refreshing dashboard data.');
+                    refreshDashboardData();
+                }
+            });
         }
 
         function initializeScoreChart(scoreHistory) {
@@ -204,7 +213,7 @@
 
         function refreshDashboardData() {
             // Optionnel : actualiser les données depuis l'API
-            fetch('/dashboard/data')
+            fetch('/dashboard/data', { cache: 'no-store' })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {

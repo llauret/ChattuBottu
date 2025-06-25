@@ -947,10 +947,10 @@ function submitQCM() {
     })
   })
   .then(response => response.json())
-  .then(data => {
+  .then(async (data) => {
     if (data.success) {
       // Tracker la completion du QCM
-      sessionTracker.completeQCM({
+      await sessionTracker.completeQCM({
         qcm_id: currentQCM.id,
         qcm_title: currentQCM.title,
         user_answers: userAnswers,
@@ -962,6 +962,10 @@ function submitQCM() {
       
       closeQCM();
       showQCMResults(data.result);
+
+      // Notifier les autres pages (comme le dashboard) qu'un QCM est terminé
+      localStorage.setItem('qcmCompletedTimestamp', new Date().getTime());
+
     } else {
       alert("Erreur lors de la soumission : " + data.error);
     }
@@ -1307,5 +1311,19 @@ document.addEventListener('click', function(event) {
   const dashboardModal = document.getElementById('dashboardModal');
   if (event.target === dashboardModal) {
     closeDashboardModal();
+  }
+});
+
+// ===================== STORAGE EVENT FOR QCM COMPLETION =====================
+// Listen for storage changes to update dashboard or other components
+window.addEventListener('storage', function(event) {
+  if (event.key === 'qcmCompletedTimestamp') {
+    // A QCM was completed, refresh relevant data
+    console.log('QCM completed detected via storage event');
+    // You can call a specific function to refresh QCM list or dashboard data here
+    // For example:
+    // refreshQCMList();
+    // or if you have a dashboard refresh function:
+    // refreshDashboardData();
   }
 });
